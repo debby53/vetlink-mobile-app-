@@ -57,29 +57,6 @@ public class LocationController {
         return ResponseEntity.ok(locationService.getAllLocations());
     }
 
-    // Validation: Check if two locations are in the same village
-    @GetMapping("/validate/same-village")
-    public ResponseEntity<Boolean> validateSameVillage(@RequestParam(name = "userCellId", required = false) Long userCellId,
-                                                       @RequestParam(name = "caseCellId", required = false) Long caseCellId,
-                                                       @RequestParam(name = "userLocationId", required = false) Long userLocationId,
-                                                       @RequestParam(name = "caseLocationId", required = false) Long caseLocationId) {
-        Long uId = userCellId != null ? userCellId : userLocationId;
-        Long cId = caseCellId != null ? caseCellId : caseLocationId;
-
-        if (uId == null || cId == null) {
-            return ResponseEntity.ok(false);
-        }
-
-        Location userLocation = locationService.getLocationById(uId);
-        Location caseLocation = locationService.getLocationById(cId);
-
-        if (userLocation == null || caseLocation == null) {
-            return ResponseEntity.ok(false);
-        }
-
-        return ResponseEntity.ok(locationService.validateLocationInSameVillage(userLocation, caseLocation));
-    }
-
     // Get location hierarchy (supports both query param and path variable)
     @GetMapping("/hierarchy")
     public ResponseEntity<String> getLocationHierarchy(@RequestParam(name = "locationId", required = false) Long locationId,
@@ -148,49 +125,5 @@ public class LocationController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(locationService.getChildLocationsByParent(district));
-    }
-
-    // Get villages by sector
-    @GetMapping("/villages")
-    public ResponseEntity<List<Location>> getVillagesBySector(@RequestParam(required = false) Long sectorId) {
-        if (sectorId != null) {
-            Location sector = locationService.getLocationById(sectorId);
-            if (sector == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(locationService.getChildLocationsByParent(sector));
-        }
-        return ResponseEntity.ok(locationService.getLocationsByType(ELocationType.VILLAGE));
-    }
-
-    @GetMapping("/villages/sector/{sectorId}")
-    public ResponseEntity<List<Location>> getVillagesBySectorPath(@PathVariable Long sectorId) {
-        Location sector = locationService.getLocationById(sectorId);
-        if (sector == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(locationService.getChildLocationsByParent(sector));
-    }
-
-    // Get cells by village
-    @GetMapping("/cells")
-    public ResponseEntity<List<Location>> getCellsByVillage(@RequestParam(required = false) Long villageId) {
-        if (villageId != null) {
-            Location village = locationService.getLocationById(villageId);
-            if (village == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(locationService.getChildLocationsByParent(village));
-        }
-        return ResponseEntity.ok(locationService.getLocationsByType(ELocationType.CELL));
-    }
-
-    @GetMapping("/cells/village/{villageId}")
-    public ResponseEntity<List<Location>> getCellsByVillagePath(@PathVariable Long villageId) {
-        Location village = locationService.getLocationById(villageId);
-        if (village == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(locationService.getChildLocationsByParent(village));
     }
 }

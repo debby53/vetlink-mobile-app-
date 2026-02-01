@@ -14,6 +14,7 @@ public class DatabaseInitializer {
     private final EntityManager entityManager;
 
     @EventListener(ContextRefreshedEvent.class)
+    @org.springframework.transaction.annotation.Transactional
     public void initializeDatabase() {
         try {
             log.info("🔧 Updating notifications constraint...");

@@ -33,6 +33,8 @@ import FarmerNewCase from "./pages/farmer/NewCase";
 import FarmerAddAnimal from "./pages/farmer/AddAnimal";
 import FarmerAddRecord from "./pages/farmer/AddRecord";
 import FarmerViewDetails from "./pages/farmer/ViewDetails";
+import FarmerEditAnimal from "./pages/farmer/EditAnimal";
+import FarmerAdvisories from "./pages/farmer/Advisories";
 import FarmerAnalytics from "./pages/farmer/Analytics";
 
 // Veterinarian Pages
@@ -72,6 +74,10 @@ import AdminTrainingEnrollments from "./pages/admin/TrainingEnrollments";
 
 // Shared Pages
 import Notifications from "./pages/Notifications";
+import { RationCalculator } from "./components/RationCalculator";
+import { TreatmentLoggingForm } from "./components/TreatmentLoggingForm";
+import { MarketListingsGrid } from "./components/MarketListingsGrid";
+import SidebarLayout from "./components/SidebarLayout";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +122,10 @@ export default function App() {
                   <Route
                     path="/farmer/animals/add"
                     element={<FarmerAddAnimal />}
+                  />
+                  <Route
+                    path="/farmer/animals/edit/:id"
+                    element={<FarmerEditAnimal />}
                   />
                   <Route
                     path="/farmer/records/add"
@@ -234,6 +244,7 @@ export default function App() {
                     path="/cahw/engagement"
                     element={<CAHWCommunityEngagement />}
                   />
+                  <Route path="/cahw/advisories" element={<FarmerAdvisories />} />
 
                   {/* Admin Routes */}
                   <Route path="/admin/users" element={<AdminUsers />} />
@@ -256,6 +267,12 @@ export default function App() {
                     path="/admin/training-enrollments"
                     element={<AdminTrainingEnrollments />}
                   />
+
+                  {/* New Feature Routes */}
+                  <Route path="/farmer/advisories" element={<FarmerAdvisories />} />
+                  <Route path="/market" element={<SidebarLayout><MarketListingsGrid /></SidebarLayout>} />
+                  <Route path="/farmer/rations" element={<SidebarLayout><RationCalculator /></SidebarLayout>} />
+                  <Route path="/cahw/treatments" element={<SidebarLayout><TreatmentLoggingForm /></SidebarLayout>} />
 
                   {/* Shared Routes */}
                   <Route path="/settings" element={<Settings />} />

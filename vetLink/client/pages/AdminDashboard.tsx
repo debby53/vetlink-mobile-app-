@@ -16,6 +16,8 @@ import {
   Activity,
   Lock,
   Settings,
+  Zap,
+  BookOpen,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -228,8 +230,8 @@ export default function AdminDashboard() {
                       key={role}
                       onClick={() => setFilterRole(role)}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${filterRole === role
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-foreground hover:bg-gray-200'
                         }`}
                     >
                       {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -318,6 +320,36 @@ export default function AdminDashboard() {
 
           {/* Right Sidebar */}
           <div className="space-y-4">
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-blue-500" />
+                Quick Actions
+              </h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => navigate('/market')}
+                  className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-yellow-200"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Manage Market
+                </button>
+                <button
+                  onClick={() => navigate('/admin/trainings')}
+                  className="w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-purple-200"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Manage Trainings
+                </button>
+                <button
+                  onClick={() => navigate('/admin/settings')}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-gray-200"
+                >
+                  <Settings className="h-4 w-4" />
+                  System Settings
+                </button>
+              </div>
+            </div>
             {/* System Alerts */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -329,8 +361,8 @@ export default function AdminDashboard() {
                   <div
                     key={alert.id}
                     className={`p-3 rounded-lg border ${alert.severity === 'critical'
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-yellow-50 border-yellow-200'
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-yellow-50 border-yellow-200'
                       }`}
                   >
                     <p className="text-sm font-medium text-foreground">

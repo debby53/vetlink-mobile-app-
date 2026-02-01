@@ -99,9 +99,8 @@ export default function Messages() {
 
   const handleCallClose = () => {
     setShowCallModal(false);
-    if (activeCall?.status !== 'connected') {
-      endCall();
-    }
+    // Always end the call when closing the modal to ensure backend is updated
+    endCall();
   };
 
   useEffect(() => {
@@ -271,9 +270,9 @@ export default function Messages() {
   const formatMessageDate = (dateString: any) => {
     try {
       if (!dateString) return 'Unknown time';
-      
+
       let date: Date;
-      
+
       // Handle array format from Java LocalDateTime: [year, month, day, hour, minute, second, nano]
       if (Array.isArray(dateString)) {
         console.log('Array date format:', dateString);
@@ -283,7 +282,7 @@ export default function Messages() {
       } else if (typeof dateString === 'string') {
         // Try parsing as ISO 8601 (with or without milliseconds and timezone)
         date = new Date(dateString);
-        
+
         // If that failed, try other formats
         if (isNaN(date.getTime())) {
           // Try removing 'Z' and timezone info and parse again
@@ -295,17 +294,17 @@ export default function Messages() {
       } else {
         date = new Date(dateString);
       }
-      
+
       if (isNaN(date.getTime())) {
         console.warn('Invalid date:', dateString);
         return 'Invalid Date';
       }
-      
-      return date.toLocaleString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
+
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit'
       });
     } catch (err) {
@@ -347,8 +346,8 @@ export default function Messages() {
     setSearchUsers('');
   };
 
-  const filteredUsers = allUsers.filter(u => 
-    u.id !== user?.id && 
+  const filteredUsers = allUsers.filter(u =>
+    u.id !== user?.id &&
     u.name?.toLowerCase().includes(searchUsers.toLowerCase())
   );
 
@@ -383,9 +382,8 @@ export default function Messages() {
               <button
                 key={conv.partnerId}
                 onClick={() => setSelectedChat(conv.partnerId)}
-                className={`w-full text-left p-4 hover:bg-gray-50 transition-all ${
-                  selectedChat === conv.partnerId ? 'bg-blue-50 border-l-4 border-primary' : ''
-                }`}
+                className={`w-full text-left p-4 hover:bg-gray-50 transition-all ${selectedChat === conv.partnerId ? 'bg-blue-50 border-l-4 border-primary' : ''
+                  }`}
               >
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-3xl">{conv.avatar}</span>
@@ -433,7 +431,7 @@ export default function Messages() {
                   >
                     <Phone className="h-5 w-5 text-primary" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => startCall(selectedChat!, 'video')}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-all"
                     title="Start video call"
@@ -540,11 +538,10 @@ export default function Messages() {
                       </div>
                     ) : (
                       <div
-                        className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
-                          msg.senderId === user?.id
+                        className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.senderId === user?.id
                             ? 'bg-green-600 text-white shadow-md'
                             : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
-                        }`}
+                          }`}
                       >
                         <p className="text-sm font-medium">{msg.content}</p>
                         <p className={`text-xs mt-2 ${msg.senderId === user?.id ? 'text-green-100' : 'text-gray-500'}`}>
@@ -560,7 +557,7 @@ export default function Messages() {
 
           {/* Message Input */}
           <div className="border-t border-gray-100 p-4">
-              <div className="flex gap-3">
+            <div className="flex gap-3">
               <input
                 type="text"
                 placeholder="Type your message..."

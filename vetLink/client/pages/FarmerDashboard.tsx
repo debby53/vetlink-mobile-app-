@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import { MarketListingsGrid } from "../components/MarketListingsGrid";
+import { RationCalculator } from "../components/RationCalculator";
+import { TreatmentLoggingForm } from "../components/TreatmentLoggingForm";
+
 import { useNavigate } from 'react-router-dom';
 import SidebarLayout from '@/components/SidebarLayout';
 import { useAuth } from '@/lib/AuthContext';
@@ -18,6 +22,7 @@ import {
   Target,
 } from 'lucide-react';
 import { caseAPI, animalAPI, CaseDTO, AnimalDTO } from '@/lib/apiService';
+import { formatDate } from '@/lib/dateUtils';
 
 export default function FarmerDashboard() {
   const { user } = useAuth();
@@ -197,7 +202,7 @@ export default function FarmerDashboard() {
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>#{caseItem.id}</span>
-                        <span>{caseItem.createdAt ? new Date(caseItem.createdAt).toLocaleDateString() : 'N/A'}</span>
+                        <span>{formatDate(caseItem.createdAt)}</span>
                       </div>
                     </div>
                   );
@@ -261,6 +266,22 @@ export default function FarmerDashboard() {
                   <Target className="h-4 w-4" />
                   {t('viewAssessments')}
                 </button>
+                <div className="pt-2 border-t border-white/20">
+                  <button
+                    onClick={() => navigate('/farmer/advisories')}
+                    className="w-full bg-green-500/20 hover:bg-green-500/30 transition-all backdrop-blur rounded-lg px-4 py-3 text-white font-medium text-sm text-left flex items-center gap-2 mb-2"
+                  >
+                    <Zap className="h-4 w-4 text-green-200" />
+                    Advisories
+                  </button>
+                  <button
+                    onClick={() => navigate('/market')}
+                    className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 transition-all backdrop-blur rounded-lg px-4 py-3 text-white font-medium text-sm text-left flex items-center gap-2"
+                  >
+                    <TrendingUp className="h-4 w-4 text-yellow-200" />
+                    Marketplace
+                  </button>
+                </div>
               </div>
             </div>
 

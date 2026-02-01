@@ -48,12 +48,12 @@ export default function FarmerMessages() {
     try {
       const allMessages = await messageAPI.getInboxMessages(user.id);
       const unreadMessages = await messageAPI.getUnreadMessages(user.id);
-      
+
       const uniquePartners = new Map();
 
       allMessages.forEach((msg: any) => {
         const partnerId = msg.senderId === user.id ? msg.recipientId : msg.senderId;
-        
+
         if (!uniquePartners.has(partnerId)) {
           uniquePartners.set(partnerId, msg);
         } else {
@@ -101,15 +101,15 @@ export default function FarmerMessages() {
       console.log(`Loading messages between user ${user.id} and ${selectedChat}`);
       const msgs = await messageAPI.getConversation(user.id, selectedChat);
       console.log('Messages loaded:', msgs);
-      
+
       const sortedMsgs = (msgs || []).sort((a, b) => {
         const dateA = parseDate(a.createdAt).getTime();
         const dateB = parseDate(b.createdAt).getTime();
         return dateA - dateB;
       });
-      
+
       setCurrentMessages(sortedMsgs);
-      
+
       if (sortedMsgs && sortedMsgs.length > 0) {
         for (const msg of sortedMsgs) {
           if (!msg.isRead && msg.recipientId === user.id) {
@@ -221,9 +221,8 @@ export default function FarmerMessages() {
 
   const handleCallClose = () => {
     setShowCallModal(false);
-    if (activeCall?.status !== 'connected') {
-      endCall();
-    }
+    // Always end the call when closing the modal to ensure backend is updated
+    endCall();
   };
 
   useEffect(() => {
@@ -267,9 +266,9 @@ export default function FarmerMessages() {
   const formatMessageDate = (dateString: any) => {
     try {
       if (!dateString) return 'Unknown time';
-      
+
       let date: Date;
-      
+
       // Handle array format from Java LocalDateTime: [year, month, day, hour, minute, second, nano]
       if (Array.isArray(dateString)) {
         console.log('Array date format:', dateString);
@@ -279,7 +278,7 @@ export default function FarmerMessages() {
       } else if (typeof dateString === 'string') {
         // Try parsing as ISO 8601 (with or without milliseconds and timezone)
         date = new Date(dateString);
-        
+
         // If that failed, try other formats
         if (isNaN(date.getTime())) {
           // Try removing 'Z' and timezone info and parse again
@@ -291,17 +290,17 @@ export default function FarmerMessages() {
       } else {
         date = new Date(dateString);
       }
-      
+
       if (isNaN(date.getTime())) {
         console.warn('Invalid date:', dateString);
         return 'Invalid Date';
       }
-      
-      return date.toLocaleString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
+
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit'
       });
     } catch (err) {
@@ -317,8 +316,8 @@ export default function FarmerMessages() {
     loadDirectCAHWChat(userId);
   };
 
-  const filteredModalUsers = allUsers.filter(u => 
-    u.id !== user?.id && 
+  const filteredModalUsers = allUsers.filter(u =>
+    u.id !== user?.id &&
     u.name?.toLowerCase().includes(modalSearch.toLowerCase())
   );
 
@@ -355,7 +354,7 @@ export default function FarmerMessages() {
 
   const handleSendMessage = async () => {
     console.log('Send button clicked', { selectedChat, messageText, userId: user?.id });
-    
+
     if (!messageText.trim() || !selectedChat || !user?.id) {
       toast.error('Please enter a message and select a conversation');
       return;
@@ -375,7 +374,7 @@ export default function FarmerMessages() {
       setCurrentMessages([...currentMessages, newMessage]);
       setMessageText('');
       toast.success('Message sent successfully');
-      
+
       // Refresh conversations to update last message and timestamp
       loadConversations();
     } catch (err: any) {
@@ -530,9 +529,8 @@ export default function FarmerMessages() {
                     <button
                       key={conv.id}
                       onClick={() => setSelectedChat(conv.id)}
-                      className={`w-full text-left p-4 hover:bg-gray-50 transition-all ${
-                        selectedChat === conv.id ? 'bg-blue-50 border-l-4 border-primary' : ''
-                      }`}
+                      className={`w-full text-left p-4 hover:bg-gray-50 transition-all ${selectedChat === conv.id ? 'bg-blue-50 border-l-4 border-primary' : ''
+                        }`}
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
@@ -574,7 +572,7 @@ export default function FarmerMessages() {
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
               </div>
-              
+
               {/* Search Input */}
               <div className="p-4 border-b border-gray-100">
                 <div className="relative">
@@ -589,7 +587,7 @@ export default function FarmerMessages() {
                   />
                 </div>
               </div>
-              
+
               {/* Users List */}
               <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
                 {filteredModalUsers.length === 0 ? (
@@ -653,7 +651,7 @@ export default function FarmerMessages() {
                   >
                     <Phone className="h-5 w-5 text-primary" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => startCall(selectedChat!, 'video')}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-all"
                     title="Start video call"
@@ -771,11 +769,10 @@ export default function FarmerMessages() {
                               </div>
                             ) : (
                               <div
-                                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
-                                  msg.senderId === user?.id
+                                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.senderId === user?.id
                                     ? 'bg-green-600 text-white shadow-md'
                                     : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
-                                }`}
+                                  }`}
                               >
                                 <p className="text-sm font-medium">{msg.content}</p>
                                 <p className={`text-xs mt-2 ${msg.senderId === user?.id ? 'text-green-100' : 'text-gray-500'}`}>

@@ -16,6 +16,7 @@ import {
   Zap,
   Map,
   Calendar,
+  Lightbulb
 } from "lucide-react";
 import { useState } from "react";
 
@@ -32,15 +33,17 @@ export default function Sidebar() {
       { icon: Heart, label: t('myCases'), path: "/farmer/cases" },
       { icon: FileText, label: t('healthRecords'), path: "/farmer/records" },
       { icon: Activity, label: t('myAnimals'), path: "/farmer/animals" },
-      { icon: Calendar, label: t('scheduleVisit'), path: "/farmer/schedule-visit" },
+      { icon: Zap, label: t('advisories'), path: "/farmer/advisories" },
+      { icon: TrendingUp, label: t('marketplace'), path: "/market" },
+
       { icon: BarChart3, label: t('analytics'), path: "/farmer/analytics" },
       { icon: MessageSquare, label: t('messages'), path: "/farmer/messages" },
     ],
     veterinarian: [
       { icon: Home, label: t('dashboard'), path: "/dashboard/veterinarian" },
       { icon: FileText, label: t('cases'), path: "/veterinarian/cases" },
-      { icon: Users, label: 'Farmers', path: "/veterinarian/patients" },
-      { icon: Users, label: 'CAHWs', path: "/veterinarian/cahws" },
+      { icon: Users, label: t('farmers'), path: "/veterinarian/patients" },
+      { icon: Users, label: t('cahws'), path: "/veterinarian/cahws" },
       {
         icon: Heart,
         label: t('treatmentPlans'),
@@ -49,12 +52,12 @@ export default function Sidebar() {
 
       {
         icon: BookOpen,
-        label: "My Courses",
+        label: t('myCourses'),
         path: "/veterinarian/my-courses",
       },
       {
         icon: BookOpen,
-        label: "Create Course",
+        label: t('createCourse'),
         path: "/veterinarian/training/upload",
       },
       { icon: BarChart3, label: t('analytics'), path: "/veterinarian/analytics" },
@@ -72,19 +75,22 @@ export default function Sidebar() {
         label: t('continueLearning'), // Approximation for 'Browse Courses'
         path: "/cahw/available-trainings",
       },
-      { icon: Users, label: t('community'), path: "/cahw/engagement" },
+      // { icon: Users, label: t('community'), path: "/cahw/engagement" },
       { icon: Map, label: t('nearbyCases'), path: "/cahw/nearby-cases" },
+      { icon: FileText, label: t('logTreatment'), path: "/cahw/treatments" },
+      { icon: Lightbulb, label: t('advisories'), path: "/cahw/advisories" },
+      { icon: TrendingUp, label: t('marketplace'), path: "/market" },
       { icon: TrendingUp, label: t('progress'), path: "/cahw/progress" },
       { icon: MessageSquare, label: t('messages'), path: "/cahw/messages" },
     ],
     admin: [
       { icon: Home, label: t('dashboard'), path: "/dashboard/admin" },
-      { icon: BookOpen, label: "Training Management", path: "/admin/trainings" },
-      { icon: Users, label: "Enrollments", path: "/admin/training-enrollments" },
+      { icon: BookOpen, label: t('trainingManagement'), path: "/admin/trainings" },
+      { icon: Users, label: t('enrollments'), path: "/admin/training-enrollments" },
       { icon: Users, label: t('users'), path: "/admin/users" },
       { icon: BarChart3, label: t('analytics'), path: "/admin/analytics" },
+      { icon: TrendingUp, label: t('marketplace'), path: "/market" },
       { icon: FileText, label: t('reports'), path: "/admin/reports" },
-      { icon: Zap, label: t('settings'), path: "/admin/settings" },
     ],
   };
 

@@ -6,26 +6,25 @@ import {
   Globe,
   Users,
   Clock,
-  TrendingUp,
   Heart,
   CheckCircle,
   ArrowRight,
-  Zap,
   Search,
   Star,
   Shield,
   Activity,
   Phone,
-  Leaf,
-  Target,
   BarChart3,
   Cloud,
-  SmartphoneNfc,
+  Award,
+  Video,
+  FileText,
+  Target,
+  Hash,
+  Menu,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/LanguageContext";
-import { Navigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, Variants, useScroll, useTransform } from "framer-motion";
 import { useState, useRef } from "react";
@@ -55,8 +54,6 @@ const itemVariants: Variants = {
 
 export default function Home() {
   const { t } = useLanguage();
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [imageHovered, setImageHovered] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -69,22 +66,15 @@ export default function Home() {
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.98]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-white antialiased overflow-x-hidden">
       <Header />
 
-      {/* Modern Hero Section */}
-      <section ref={heroRef} className="relative pt-20 pb-20 md:pt-28 md:pb-36 overflow-hidden">
-        {/* Clean Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-
-        {/* Subtle Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-          }}
-        />
+      {/* Hero Section - Brand Primary Green */}
+      <section ref={heroRef} className="relative pt-20 pb-24 md:pt-28 md:pb-32 overflow-hidden bg-primary">
+        {/* Decorative Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }} />
 
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
           <motion.div
@@ -95,300 +85,212 @@ export default function Home() {
             className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center"
           >
             {/* Left Content */}
-            <div className="space-y-6">
-              <motion.div variants={itemVariants} className="space-y-4">
+            <div className="space-y-8">
+              <motion.div variants={itemVariants} className="space-y-6">
+                {/* Badge */}
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30"
                 >
-                  <div className="flex items-center gap-1.5">
-                    <Leaf className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-xs font-semibold text-primary tracking-wide">
-                      {t('connectedVeterinaryCare')}
-                    </span>
-                  </div>
+                  <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  <span className="text-sm font-semibold text-white">
+                    {t('heroBadge')}
+                  </span>
                 </motion.div>
 
+                {/* Main Heading */}
                 <div>
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-slate-900 leading-tight tracking-tight">
-                    <span className="block">{t('heroLine1')}</span>
-                    <span className="block text-primary">{t('heroLine2')}</span>
-                    <span className="block">{t('heroLine3')}</span>
+                  <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight">
+                    <span className="block">{t('heroTitleLine1')}</span>
+                    <span className="block">{t('heroTitleLine2')}</span>
+                    <span className="block text-secondary">{t('heroTitleLine3')}</span>
                   </h1>
                 </div>
+
+                {/* Description */}
+                <p className="text-xl text-white/90 leading-relaxed max-w-xl">
+                  {t('heroDescription')}
+                </p>
               </motion.div>
 
-              <motion.p
-                variants={itemVariants}
-                className="text-lg text-slate-600 leading-relaxed max-w-xl"
-              >
-                {t('heroDesc')}
-              </motion.p>
-
-              {/* Clean Search Bar - Enhanced */}
+              {/* CTA Buttons */}
               <motion.div
                 variants={itemVariants}
-                className="space-y-3"
+                className="flex flex-wrap items-center gap-4"
               >
-                <div className="relative">
-                  <div className="relative flex items-center bg-white rounded-xl shadow-sm border border-slate-200 p-1 group hover:border-primary/50 transition-colors duration-300">
-                    <Search className="absolute left-4 h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
-                    <Input
-                      placeholder={t('searchPlaceholderLanding')}
-                      onFocus={() => setSearchFocused(true)}
-                      onBlur={() => setSearchFocused(false)}
-                      className="pl-11 border-none bg-transparent text-base h-12 focus-visible:ring-0"
-                    />
-                    <Button className="ml-2 px-6 h-10 rounded-lg bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-lg">
-                      {t('search')}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-slate-500 mt-2 px-1">
-                    Try searching for: "vaccination schedule", "sick cow symptoms", "nearest vet"
-                  </p>
-                </div>
+                <Link to="/signup">
+                  <Button className="h-14 px-8 text-base font-semibold rounded-xl bg-white text-primary hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all">
+                    {t('heroButtonStarted')}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button className="h-14 px-8 text-base font-semibold rounded-xl bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 hover:bg-white/20 transition-all">
+                    <Phone className="mr-2 h-5 w-5" />
+                    {t('heroButtonDial')}
+                  </Button>
+                </Link>
               </motion.div>
 
-              {/* Trust Badges - Enhanced */}
+              {/* Trust Indicators */}
               <motion.div
                 variants={itemVariants}
-                className="flex flex-wrap items-center gap-4 pt-6"
-              >
-                <div className="flex items-center gap-2 text-slate-600 bg-white/50 backdrop-blur-sm px-3 py-2 rounded-lg border border-slate-200">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                  </div>
-                  <span className="text-sm font-medium">HIPAA Compliant</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600 bg-white/50 backdrop-blur-sm px-3 py-2 rounded-lg border border-slate-200">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10">
-                    <Users className="h-3 w-3 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium">10K+ Farmers</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600 bg-white/50 backdrop-blur-sm px-3 py-2 rounded-lg border border-slate-200">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100">
-                    <Shield className="h-3 w-3 text-blue-600" />
-                  </div>
-                  <span className="text-sm font-medium">Secure Platform</span>
-                </div>
-              </motion.div>
-
-              {/* Quick Stats */}
-              <motion.div
-                variants={itemVariants}
-                className="grid grid-cols-3 gap-3 pt-4"
+                className="flex flex-wrap items-center gap-6 pt-4"
               >
                 {[
-                  { value: "24/7", label: "Support", color: "text-primary" },
-                  { value: "2 min", label: "Response", color: "text-green-600" },
-                  { value: "100%", label: "Coverage", color: "text-blue-600" }
-                ].map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
-                    <div className="text-xs text-slate-500">{stat.label}</div>
+                  { icon: <CheckCircle className="h-4 w-4" />, text: t('trustVets') },
+                  { icon: <Shield className="h-4 w-4" />, text: t('trustSecure') },
+                  { icon: <Star className="h-4 w-4" />, text: t('trustFarmers') }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-2 text-white/90">
+                    <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
+                      {item.icon}
+                    </div>
+                    <span className="text-sm font-medium">{item.text}</span>
                   </div>
                 ))}
               </motion.div>
             </div>
 
-            {/* Right Visual - Interactive Livestock Image with Dashboard Overlay */}
+            {/* Right Visual - Livestock Images Collage */}
             <motion.div
               variants={itemVariants}
               className="relative"
-              onMouseEnter={() => setImageHovered(true)}
-              onMouseLeave={() => setImageHovered(false)}
             >
-              {/* Main Image Container with Interactive Effects */}
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20">
-                {/* Background Livestock Image */}
-                <div className="relative h-[420px] md:h-[520px] w-full">
-                  {/* Fallback gradient background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-amber-50" />
-
-                  {/* Actual livestock image - Using a beautiful Rwandan pastoral scene */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Main Large Image - Cow Portrait */}
+                <div className="col-span-2 relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 group">
                   <img
-                    src="https://images.unsplash.com/photo-1596733430284-f7437764b1a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-                    alt="Rwandan livestock - cows and goats in a pastoral setting"
-                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
-                    style={{
-                      transform: imageHovered ? 'scale(1.05)' : 'scale(1)',
-                      filter: imageHovered ? 'brightness(1.1) saturate(1.2)' : 'brightness(1) saturate(1)'
-                    }}
+                    src="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=800&auto=format&fit=crop"
+                    alt="Healthy cow portrait"
+                    className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-700"
                   />
-
-                  {/* Gradient overlay for better text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-
-                  {/* Animated floating animals overlay */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="absolute inset-0 pointer-events-none"
-                  >
-                    {[1, 2, 3].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute"
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{
-                          y: [0, -8, 0],
-                          opacity: [0.3, 0.5, 0.3]
-                        }}
-                        transition={{
-                          duration: 3 + i,
-                          repeat: Infinity,
-                          delay: i * 0.5
-                        }}
-                        style={{
-                          left: `${20 + i * 25}%`,
-                          top: `${30 + i * 15}%`,
-                        }}
-                      >
-                        <div className="w-3 h-3 rounded-full bg-primary/30 backdrop-blur-sm" />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-
-                {/* Floating Dashboard Preview - Overlay on image */}
-                <motion.div
-                  initial={{ x: 40, y: 40, opacity: 0 }}
-                  animate={{ x: 0, y: 0, opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="absolute -bottom-5 -right-5 w-full max-w-xs md:max-w-sm"
-                >
-                  <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-white/30 p-4 transform hover:scale-[1.02] transition-transform duration-300">
-                    {/* Dashboard Header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Activity className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-slate-900">Vet Dashboard</h3>
-                          <p className="text-xs text-slate-500">Live monitoring</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Dashboard Content */}
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { label: "Active Cases", value: "128", change: "+12%", color: "text-green-600" },
-                        { label: "Response", value: "2h", change: "-30m", color: "text-blue-600" },
-                        { label: "Satisfaction", value: "96%", change: "+4%", color: "text-amber-600" },
-                        { label: "Online", value: "342", change: "+24", color: "text-purple-600" },
-                      ].map((stat, i) => (
-                        <div key={i} className="bg-white/80 rounded-lg p-3 backdrop-blur-sm">
-                          <p className="text-xs text-slate-600 mb-1">{stat.label}</p>
-                          <div className="flex items-end gap-1">
-                            <p className="text-lg font-bold text-slate-900">{stat.value}</p>
-                            <span className={`text-xs ${stat.color} font-medium`}>
-                              {stat.change}
-                            </span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-primary/20 to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+                            <Heart className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{t('imageOverlayHealthRate')}</p>
+                            <p className="text-xs text-slate-600">{t('imageOverlayAnimals')}</p>
                           </div>
                         </div>
-                      ))}
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">10K+</p>
+                          <p className="text-xs text-slate-600">{t('imageOverlayAnimals')}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Floating Mobile Preview */}
-                  <motion.div
-                    initial={{ x: -40, y: 20, opacity: 0 }}
-                    animate={{ x: 0, y: 0, opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                    className="absolute -top-4 -left-4 w-40 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-white/30 p-3"
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-lg bg-secondary/10 flex items-center justify-center">
-                        <SmartphoneNfc className="h-3 w-3 text-secondary" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-medium">USSD Access</h4>
-                        <p className="text-xs text-slate-500 font-mono">*789#</p>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-1.5 rounded-full bg-slate-200/70" />
-                      ))}
-                    </div>
-                  </motion.div>
-                </motion.div>
+                {/* Small Image 1 - Goat */}
+                <div className="relative rounded-2xl overflow-hidden shadow-xl border-4 border-white/20 group">
+                  <img
+                    src="https://images.unsplash.com/photo-1524024973431-2ad916746881?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                    alt="Goat"
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/50 to-transparent" />
+                  <div className="absolute bottom-3 left-3">
+                    <p className="text-white font-bold text-sm">{t('imageOverlayGoat')}</p>
+                  </div>
+                </div>
+
+                {/* Small Image 2 - Poultry */}
+                <div className="relative rounded-2xl overflow-hidden shadow-xl border-4 border-white/20 group">
+                  <img
+                    src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80"
+                    alt="Poultry farming"
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/50 to-transparent" />
+                  <div className="absolute bottom-3 left-3">
+                    <p className="text-white font-bold text-sm">{t('imageOverlayPoultry')}</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Floating Stats */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 }}
+                className="absolute -left-4 top-1/3 bg-white rounded-2xl shadow-2xl p-4 w-44"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Video className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">24/7</p>
+                    <p className="text-xs text-slate-600">{t('floatingStatVideoCalls')}</p>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Grid - Clean & Modern */}
-      <section className="py-16 bg-white">
+      {/* Features Section */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12 space-y-3"
+            className="text-center mb-16 space-y-4"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
-              Everything You Need in One Platform
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900">
+              {t('featuresMainTitle')} <span className="text-primary">{t('featuresMainTitleHighlight')}</span>
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Comprehensive veterinary solutions designed for Rwanda's unique needs
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              {t('featuresMainDesc')}
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                icon: <MessageSquare className="h-6 w-6" />,
-                title: "Instant Consultation",
-                description: "Connect with certified veterinarians in real-time via chat, voice, or video.",
-                color: "bg-blue-50 text-blue-600",
-                gradient: "from-blue-50 to-white"
+                icon: <MessageSquare className="h-7 w-7" />,
+                title: t('feature1Title'),
+                description: t('feature1Desc'),
+                image: "https://images.unsplash.com/photo-1623366302587-bca021d668f9?q=80&w=800&auto=format&fit=crop"
               },
               {
-                icon: <Smartphone className="h-6 w-6" />,
-                title: "USSD Access",
-                description: "No internet? No problem. Access services via *789# on any phone.",
-                color: "bg-green-50 text-green-600",
-                gradient: "from-green-50 to-white"
+                icon: <Smartphone className="h-7 w-7" />,
+                title: t('feature2Title'),
+                description: t('feature2Desc'),
+                image: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80"
               },
               {
-                icon: <Cloud className="h-6 w-6" />,
-                title: "Health Records",
-                description: "Secure digital records accessible anytime, anywhere.",
-                color: "bg-purple-50 text-purple-600",
-                gradient: "from-purple-50 to-white"
+                icon: <FileText className="h-7 w-7" />,
+                title: t('feature3Title'),
+                description: t('feature3Desc'),
+                image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80"
               },
               {
-                icon: <Target className="h-6 w-6" />,
-                title: "Preventive Care",
-                description: "Get alerts for vaccinations, treatments, and check-ups.",
-                color: "bg-orange-50 text-orange-600",
-                gradient: "from-orange-50 to-white"
+                icon: <Target className="h-7 w-7" />,
+                title: t('feature4Title'),
+                description: t('feature4Desc'),
+                image: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=800&auto=format&fit=crop"
               },
               {
-                icon: <BarChart3 className="h-6 w-6" />,
-                title: "Farm Analytics",
-                description: "Monitor livestock health trends and productivity insights.",
-                color: "bg-indigo-50 text-indigo-600",
-                gradient: "from-indigo-50 to-white"
+                icon: <BarChart3 className="h-7 w-7" />,
+                title: t('feature5Title'),
+                description: t('feature5Desc'),
+                image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800&q=80"
               },
               {
-                icon: <Users className="h-6 w-6" />,
-                title: "Community Network",
-                description: "Connect with other farmers and share experiences.",
-                color: "bg-pink-50 text-pink-600",
-                gradient: "from-pink-50 to-white"
+                icon: <Users className="h-7 w-7" />,
+                title: t('feature6Title'),
+                description: t('feature6Desc'),
+                image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop"
               }
             ].map((feature, index) => (
               <motion.div
@@ -397,120 +299,143 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -4 }}
-                className={`group bg-gradient-to-br ${feature.gradient} p-6 rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300`}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
-                <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  {feature.icon}
+                {/* Feature Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className={`absolute top-4 left-4 w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-lg`}>
+                    <div className="text-primary">
+                      {feature.icon}
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {feature.description}
-                </p>
+
+                {/* Feature Content */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* USSD Section - Clean Design */}
-      <section className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* USSD Section - Clean & Professional */}
+      <section className="py-24 bg-slate-50 border-y border-slate-200">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="space-y-4"
-              >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-300">
-                  <Phone className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-semibold">Universal Access</span>
-                </div>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
 
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
-                  Veterinary Care Without Internet
-                </h2>
+            {/* Left Text Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <Phone className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">{t('ussdBadge')}</span>
+              </div>
 
-                <p className="text-lg text-slate-600 leading-relaxed">
-                  Our USSD service brings professional veterinary consultation to every basic phone in Rwanda.
-                  Simply dial <span className="font-bold text-primary">*789#</span> to get started.
-                </p>
+              <h2 className="text-5xl md:text-6xl font-extrabold text-slate-900 leading-tight">
+                {t('ussdTitleLine1')} <br />
+                {t('ussdTitleLine2')}
+              </h2>
 
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  {[
-                    { value: "0 Rwf", label: "No Data Cost", icon: "💰" },
-                    { value: "100%", label: "National Coverage", icon: "📍" },
-                    { value: "24/7", label: "Always Available", icon: "⏰" },
-                    { value: "2 Languages", label: "Kinyarwanda & English", icon: "🗣️" }
-                  ].map((stat, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-white p-4 rounded-lg border border-slate-200 hover:border-primary/30 transition-colors"
-                    >
-                      <div className="text-xl mb-1">{stat.icon}</div>
-                      <div className="text-lg font-bold text-slate-900 mb-0.5">
-                        {stat.value}
-                      </div>
-                      <div className="text-sm text-slate-600">
-                        {stat.label}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
+              <p className="text-xl text-slate-600 leading-relaxed font-normal">
+                {t('ussdDescription')}
+              </p>
 
-            {/* USSD Phone Mockup */}
+              <div className="grid grid-cols-2 gap-6 pt-4">
+                {[
+                  { value: "0 Rwf", label: t('ussdStatNoData'), icon: "💰" },
+                  { value: "100%", label: t('ussdStatCoverage'), icon: "📍" },
+                  { value: "24/7", label: t('ussdStatAvailable'), icon: "⏰" },
+                  { value: t('ussdStatLanguage'), label: "KIN & ENG", icon: "🗣️" }
+                ].map((stat, index) => (
+                  <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="text-2xl mb-3">{stat.icon}</div>
+                    <div className="text-3xl font-bold text-slate-900 mb-1">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-slate-500 font-medium">
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Right: Realistic Phone Mockup */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               className="flex justify-center"
             >
-              <div className="relative w-full max-w-xs">
-                <div className="bg-slate-900 rounded-[2rem] p-6 pb-8 shadow-2xl">
-                  {/* Phone Notch */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-2xl z-10" />
+              <div className="relative w-[300px] h-[600px] bg-black rounded-[3rem] shadow-2xl border-[12px] border-black overflow-hidden ring-1 ring-white/10">
+                {/* Status Bar */}
+                <div className="absolute top-0 inset-x-0 h-6 bg-black z-20 flex justify-between items-center px-6">
+                  <span className="text-[10px] text-white font-medium">9:41</span>
+                  <div className="flex gap-1.5">
+                    <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center p-0.5"><div className="w-full h-full bg-white rounded-[2px]" /></div>
+                    <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center p-0.5"><div className="w-full h-full bg-white rounded-[2px]" /></div>
+                  </div>
+                </div>
 
-                  <div className="space-y-4 pt-6">
-                    <div className="text-center">
-                      <div className="inline-block px-5 py-1.5 rounded-full bg-primary/20 mb-3">
-                        <code className="text-lg font-bold text-white">*789#</code>
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-b-2xl z-20" />
+
+                {/* Screen Content - Dialer Interface */}
+                <div className="w-full h-full bg-white flex flex-col relative z-0">
+                  {/* Header/USSD Code Display */}
+                  <div className="bg-primary/5 pb-6 pt-12 px-6 border-b border-primary/10">
+                    <div className="flex justify-center mb-6">
+                      <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                        <Hash className="h-8 w-8 text-white" />
                       </div>
-                      <p className="text-xs text-slate-400">VetLink USSD Service</p>
                     </div>
+                    <div className="text-center space-y-2">
+                      <h3 className="text-3xl font-bold text-slate-900 tracking-tight">*789#</h3>
+                      <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">VetLink USSD</p>
+                    </div>
+                  </div>
 
-                    <div className="space-y-2">
-                      {[
-                        "1. Emergency Consultation",
-                        "2. Find Nearest Vet",
-                        "3. Schedule Check-up",
-                        "4. Medication Advice",
-                        "5. Health Records"
-                      ].map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
-                        >
-                          <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
-                            {index + 1}
-                          </div>
-                          <span className="text-sm text-white font-medium">{item}</span>
+                  {/* Menu Items */}
+                  <div className="flex-1 p-6 space-y-3 overflow-y-auto">
+                    {[
+                      { icon: <Activity className="w-4 h-4 text-primary" />, text: t('ussdMockupEmergency') },
+                      { icon: <Search className="w-4 h-4 text-primary" />, text: t('ussdMockupFindVet') },
+                      { icon: <Clock className="w-4 h-4 text-primary" />, text: t('ussdMockupAppointments') },
+                      { icon: <FileText className="w-4 h-4 text-primary" />, text: t('ussdMockupMyRecords') },
+                      { icon: <Target className="w-4 h-4 text-primary" />, text: t('ussdMockupMarketPrices') }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 transition-all hover:bg-slate-100/80 active:scale-95 cursor-pointer">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm text-xs font-bold text-slate-400">
+                          {i + 1}
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-3">
-                      <div className="h-10 w-full rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all">
-                        DIAL NOW
+                        <span className="text-slate-700 font-medium flex-1">{item.text}</span>
+                        {item.icon}
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Call Button area */}
+                  <div className="p-6 bg-slate-50 border-t border-slate-100">
+                    <div className="w-full h-14 bg-[#22c55e] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer group">
+                      <Phone className="h-6 w-6 text-white fill-current animate-pulse" />
                     </div>
                   </div>
                 </div>
@@ -520,20 +445,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-white">
+      {/* Stats Section - Primary Green Brand Color */}
+      <section className="py-24 bg-primary">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-10"
           >
             {[
-              { value: "10,000+", label: "Farmers Served", icon: <Users />, color: "bg-primary/10 text-primary" },
-              { value: "92%", label: "Satisfaction Rate", icon: <Star />, color: "bg-amber-100 text-amber-600" },
-              { value: "2h", label: "Avg. Response Time", icon: <Clock />, color: "bg-blue-100 text-blue-600" },
-              { value: "100%", label: "Rwanda Coverage", icon: <Globe />, color: "bg-green-100 text-green-600" }
+              { value: "10,000+", label: t('statsFarmersServedLabel'), icon: <Users className="h-8 w-8" /> },
+              { value: "500+", label: t('statsCertifiedVetsLabel'), icon: <Award className="h-8 w-8" /> },
+              { value: "98%", label: t('statsSatisfactionLabel'), icon: <Star className="h-8 w-8" /> },
+              { value: "30", label: t('statsDistrictsLabel'), icon: <Globe className="h-8 w-8" /> }
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -541,15 +466,15 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center p-4 rounded-xl bg-gradient-to-b from-slate-50 to-white border border-slate-200 hover:border-primary/30 transition-colors"
+                className="text-center group"
               >
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${stat.color} mb-3`}>
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-sm mb-6 text-white group-hover:scale-110 transition-transform duration-300">
                   {stat.icon}
                 </div>
-                <div className="text-2xl font-bold text-slate-900 mb-1">
+                <div className="text-5xl font-extrabold text-white mb-2 tracking-tight">
                   {stat.value}
                 </div>
-                <div className="text-sm text-slate-600 font-medium">
+                <div className="text-lg text-white/80 font-medium uppercase tracking-wider">
                   {stat.label}
                 </div>
               </motion.div>
@@ -558,107 +483,106 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section - Enhanced without buttons */}
-      <section className="py-16 bg-gradient-to-r from-primary/90 to-secondary/90">
-        <div className="container mx-auto max-w-4xl px-4 sm:px-6">
+      {/* CTA Section - Redesigned: Clean, Interactive, Premium */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="container mx-auto max-w-6xl px-4 sm:px-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="text-center space-y-4"
+            transition={{ duration: 0.5 }}
+            className="relative rounded-[3rem] bg-gradient-to-br from-primary to-emerald-700 overflow-hidden px-6 py-20 sm:px-12 sm:py-24 text-center shadow-2xl shadow-primary/25"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
-              Ready to Transform Animal Care?
-            </h2>
-            <p className="text-lg text-white/90 max-w-2xl mx-auto">
-              Join thousands of farmers and veterinarians using VetLink to improve livestock health and productivity.
-            </p>
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.1, 0.2, 0.1],
+                  rotate: [0, 45, 0]
+                }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] bg-white rounded-full blur-3xl opacity-10"
+              />
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.1, 0.15, 0.1],
+                  x: [0, -20, 0]
+                }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-[20%] -left-[10%] w-[500px] h-[500px] bg-secondary rounded-full blur-3xl opacity-20"
+              />
+            </div>
 
-            {/* Interactive Stats Bar */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-wrap justify-center gap-6 pt-6"
-            >
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">24/7</div>
-                <div className="text-sm text-white/80">Support Available</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">98%</div>
-                <div className="text-sm text-white/80">Problem Resolution</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">45%</div>
-                <div className="text-sm text-white/80">Cost Reduction</div>
-              </div>
-            </motion.div>
+            {/* Content */}
+            <div className="relative z-10 max-w-3xl mx-auto space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+                {t('ctaTitle')}
+              </h2>
+              <p className="text-xl text-primary-foreground/90 font-medium max-w-2xl mx-auto leading-relaxed">
+                {t('ctaDesc')}
+              </p>
 
-            {/* Search Bar in CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="pt-4"
-            >
-              <div className="relative max-w-md mx-auto">
-                <div className="relative flex items-center bg-white/10 backdrop-blur-sm rounded-lg p-1 border border-white/20">
-                  <Search className="absolute left-3 h-4 w-4 text-white/70" />
-                  <Input
-                    placeholder="Search for vets, medicines, or advice..."
-                    className="pl-9 border-none bg-transparent text-white placeholder-white/70 text-sm h-10 focus-visible:ring-0"
-                  />
-                  <Button className="ml-2 px-4 h-8 rounded-md bg-white text-primary text-sm font-semibold hover:bg-white/90 transition-colors">
-                    Search
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-block"
+              >
+                <Link to="/signup">
+                  <Button className="h-16 px-10 text-lg font-bold rounded-2xl bg-white text-primary hover:bg-gray-50 shadow-xl transition-all flex items-center gap-3">
+                    {t('ctaButton')}
+                    <div className="bg-primary/10 rounded-full p-1">
+                      <ArrowRight className="h-5 w-5 text-primary" />
+                    </div>
                   </Button>
-                </div>
-              </div>
-            </motion.div>
+                </Link>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-white py-12">
+      {/* Footer - Consistent Primary Green */}
+      <footer className="bg-primary text-white py-16">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Activity className="h-4 w-4" />
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/10 p-2 rounded-xl backdrop-blur-sm">
+                  <img src="/logo.png" alt="VetLink Logo" className="h-10 w-auto object-contain brightness-0 invert" />
                 </div>
-                <span className="text-xl font-bold">VetLink</span>
+                <span className="text-2xl font-bold tracking-tight text-white">VetLink</span>
               </div>
-              <p className="text-sm text-slate-400">
-                Revolutionizing veterinary care across Rwanda with accessible, technology-driven solutions.
+              <p className="text-white/80 leading-relaxed max-w-xs font-medium">
+                {t('footerSlogan')}
               </p>
             </div>
 
             {[
               {
-                title: "Product",
-                links: ["Features", "Pricing", "USSD", "Mobile App", "API"]
+                title: t('footerProduct'),
+                links: ["footerFeatures", "footerPricing", "footerUSSD", "footerMobileApp"]
               },
               {
-                title: "Company",
-                links: ["About", "Careers", "Blog", "Press", "Contact"]
+                title: t('footerCompany'),
+                links: ["footerAbout", "footerCareers", "footerBlog", "footerContact"]
               },
               {
-                title: "Resources",
-                links: ["Documentation", "Help Center", "Community", "Partners", "Status"]
+                title: t('footerResources'),
+                links: ["footerHelpCenter", "footerCommunity", "footerDocs", "footerStatus"]
               }
             ].map((column, index) => (
-              <div key={index} className="space-y-3">
-                <h4 className="font-semibold text-sm">{column.title}</h4>
-                <ul className="space-y-2">
-                  {column.links.map((link) => (
-                    <li key={link}>
+              <div key={index} className="space-y-6">
+                <h4 className="font-bold text-lg tracking-wide text-white">{column.title}</h4>
+                <ul className="space-y-4">
+                  {column.links.map((linkKey) => (
+                    <li key={linkKey}>
                       <a
                         href="#"
-                        className="text-sm text-slate-400 hover:text-white transition-colors"
+                        className="text-white/80 hover:text-white transition-colors hover:translate-x-1 inline-block font-medium"
                       >
-                        {link}
+                        {t(linkKey)}
                       </a>
                     </li>
                   ))}
@@ -667,14 +591,14 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="pt-6 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-slate-500">
-              © 2024 VetLink. All rights reserved.
+          <div className="pt-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-white/80 text-sm font-medium">
+              {t('footerRights')}
             </p>
-            <div className="flex gap-4 text-xs text-slate-500">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Cookies</a>
+            <div className="flex gap-8 text-white/80 text-sm font-medium">
+              <a href="#" className="hover:text-white transition-colors">{t('footerPrivacy')}</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footerTerms')}</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footerCookies')}</a>
             </div>
           </div>
         </div>

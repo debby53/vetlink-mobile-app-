@@ -18,6 +18,7 @@ import {
   Zap,
   Target,
   AlertCircle,
+  Lightbulb,
 } from 'lucide-react';
 
 export default function CAHWDashboard() {
@@ -92,6 +93,7 @@ export default function CAHWDashboard() {
     duration: t.duration || '0 hours',
     lessons: t.totalLessons || 0,
     completedLessons: Math.floor((t.progress || 0) / 100 * (t.totalLessons || 0)),
+    locked: false, // Default to unlocked for now
   }));
 
   const certList = certifications.map((c: any) => ({
@@ -194,91 +196,90 @@ export default function CAHWDashboard() {
               ) : (
                 trainingModules.map((module) => (
                   <div key={module.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div
-                    onClick={() =>
-                      setExpandedModule(expandedModule === module.id ? null : module.id)
-                    }
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground">
-                            {module.title}
-                          </h3>
-                          {module.completed && (
-                            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                          )}
-                          {module.locked && (
-                            <Lock className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                          )}
+                    <div
+                      onClick={() =>
+                        setExpandedModule(expandedModule === module.id ? null : module.id)
+                      }
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground">
+                              {module.title}
+                            </h3>
+                            {module.completed && (
+                              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                            )}
+                            {module.locked && (
+                              <Lock className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {module.category} • {module.duration}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {module.category} • {module.duration}
-                        </p>
+                        <span className="text-sm font-bold text-primary">
+                          {module.progress}%
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-primary">
-                        {module.progress}%
-                      </span>
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                      <div
-                        className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all"
-                        style={{ width: `${module.progress}%` }}
-                      ></div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        {module.completedLessons} of {module.lessons} lessons
-                      </span>
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </div>
-
-                  {/* Expanded Details */}
-                  {expandedModule === module.id && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="bg-purple-50 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground mb-1">
-                            Duration
-                          </p>
-                          <p className="font-semibold text-foreground">
-                            {module.duration}
-                          </p>
-                        </div>
-                        <div className="bg-blue-50 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground mb-1">
-                            Lessons
-                          </p>
-                          <p className="font-semibold text-foreground">
-                            {module.completedLessons}/{module.lessons}
-                          </p>
-                        </div>
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                        <div
+                          className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all"
+                          style={{ width: `${module.progress}%` }}
+                        ></div>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (!module.locked) {
-                            toast.info(`${module.completed ? 'Reviewing' : 'Continuing'} ${module.title}`);
-                            navigate(module.completed ? `/cahw/training/review/${module.id}` : `/cahw/training/continue/${module.id}`);
-                          }
-                        }}
-                        disabled={module.locked}
-                        className={`w-full py-2 rounded-lg font-medium transition-all text-sm flex items-center justify-center gap-2 ${
-                          module.locked
+
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {module.completedLessons} of {module.lessons} lessons
+                        </span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+
+                    {/* Expanded Details */}
+                    {expandedModule === module.id && (
+                      <div className="mt-6 pt-6 border-t border-gray-100">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="bg-purple-50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              Duration
+                            </p>
+                            <p className="font-semibold text-foreground">
+                              {module.duration}
+                            </p>
+                          </div>
+                          <div className="bg-blue-50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              Lessons
+                            </p>
+                            <p className="font-semibold text-foreground">
+                              {module.completedLessons}/{module.lessons}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (!module.locked) {
+                              toast.info(`${module.completed ? 'Reviewing' : 'Continuing'} ${module.title}`);
+                              navigate(module.completed ? `/cahw/training/review/${module.id}` : `/cahw/training/continue/${module.id}`);
+                            }
+                          }}
+                          disabled={module.locked}
+                          className={`w-full py-2 rounded-lg font-medium transition-all text-sm flex items-center justify-center gap-2 ${module.locked
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             : 'bg-purple-500 text-white hover:bg-purple-600'
-                        }`}
-                      >
-                        <Play className="h-4 w-4" />
-                        {module.completed ? 'Review' : 'Continue Learning'}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                            }`}
+                        >
+                          <Play className="h-4 w-4" />
+                          {module.completed ? 'Review' : 'Continue Learning'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ))
               )}
             </div>
@@ -286,6 +287,37 @@ export default function CAHWDashboard() {
 
           {/* Right Sidebar */}
           <div className="space-y-4">
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-blue-500" />
+                Quick Actions
+              </h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => navigate('/cahw/treatments')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  Log Treatment
+                </button>
+                <button
+                  onClick={() => navigate('/cahw/advisories')}
+                  className="w-full bg-green-500/10 hover:bg-green-500/20 text-green-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-green-200"
+                >
+                  <Lightbulb className="h-4 w-4" />
+                  Advisories
+                </button>
+                <button
+                  onClick={() => navigate('/market')}
+                  className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-yellow-200"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Marketplace
+                </button>
+              </div>
+            </div>
+
             {/* Certifications */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">

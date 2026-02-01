@@ -3,6 +3,8 @@
  * Handles peer connections, media streams, and call signaling
  */
 
+import { RingtoneManager } from './RingtoneManager';
+
 export interface SignalingMessage {
   type: 'offer' | 'answer' | 'ice-candidate' | 'call-rejected' | 'call-ended' | 'ping' | 'pong';
   fromUserId: number;
@@ -35,9 +37,11 @@ export class CallManager {
   private pingInterval: NodeJS.Timeout | null = null;
   private iceCandidateQueue: RTCIceCandidate[] = [];
   private isConnecting: boolean = false;
+  private ringtoneManager: RingtoneManager;
 
   constructor(userId: number) {
     this.userId = userId;
+    this.ringtoneManager = new RingtoneManager();
     this.setupSignalingConnection();
   }
 
@@ -47,16 +51,16 @@ export class CallManager {
   private setupSignalingConnection() {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${window.location.host}/ws/call`;
-    
+
     console.log('🔌 Connecting to signaling server:', wsUrl);
-    
+
     this.signalingConnection = new WebSocket(wsUrl);
-    
+
     this.signalingConnection.onopen = () => {
       console.log('✅ WebSocket connected');
       this.startPingKeepalive();
     };
-    
+
     this.signalingConnection.onmessage = (event) => {
       try {
         const message: SignalingMessage = JSON.parse(event.data);
@@ -65,12 +69,12 @@ export class CallManager {
         console.error('❌ Error parsing signaling message:', err);
       }
     };
-    
+
     this.signalingConnection.onerror = (error) => {
       console.error('❌ WebSocket error:', error);
       this.onError?.('Connection error');
     };
-    
+
     this.signalingConnection.onclose = () => {
       console.log('❌ WebSocket disconnected');
       if (this.pingInterval) clearInterval(this.pingInterval);
@@ -109,7 +113,7 @@ export class CallManager {
    */
   private handleSignalingMessage(message: SignalingMessage) {
     console.log('📨 Received signaling message:', message.type);
-    
+
     switch (message.type) {
       case 'offer':
         this.handleRemoteOffer(message);
@@ -142,6 +146,10 @@ export class CallManager {
       this.videoEnabled = enableVideo;
       this.isConnecting = true;
 
+      // Prepare and play outgoing ringtone
+      await this.ringtoneManager.prepareAudio();
+      await this.ringtoneManager.play('outgoing');
+
       // Get media stream
       await this.getLocalMediaStream(enableVideo);
 
@@ -160,9 +168,9 @@ export class CallManager {
         offerToReceiveAudio: true,
         offerToReceiveVideo: enableVideo,
       });
-      
+
       await this.peerConnection!.setLocalDescription(offer);
-      
+
       this.send({
         type: 'offer',
         fromUserId: this.userId,
@@ -175,6 +183,7 @@ export class CallManager {
       console.log('📞 Call initiated to user:', recipientId);
     } catch (error) {
       console.error('❌ Error initiating call:', error);
+      this.ringtoneManager.stop();
       this.onError?.(error instanceof Error ? error.message : 'Failed to initiate call');
       this.cleanup();
     }
@@ -183,8 +192,11 @@ export class CallManager {
   /**
    * Accept an incoming call
    */
-  async acceptCall(callerId: number, callId: number, offer: RTCSessionDescriptionInit, enableVideo: boolean = false): Promise<void> {
+  async acceptCall(callerId: number, callId: number, offer?: RTCSessionDescriptionInit, enableVideo: boolean = false): Promise<void> {
     try {
+      // Stop incoming ringtone when accepting
+      this.ringtoneManager.stop();
+
       this.remoteUserId = callerId;
       this.callId = callId;
       this.videoEnabled = enableVideo;
@@ -193,8 +205,10 @@ export class CallManager {
       // Get media stream
       await this.getLocalMediaStream(enableVideo);
 
-      // Create peer connection
-      this.createPeerConnection();
+      // Create peer connection if not exists
+      if (!this.peerConnection) {
+        this.createPeerConnection();
+      }
 
       // Add local stream tracks to peer connection
       if (this.localStream) {
@@ -203,25 +217,39 @@ export class CallManager {
         });
       }
 
-      // Set remote description
-      await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(offer));
+      // Set remote description if provided and valid, otherwise check if already set
+      if (offer && offer.sdp) {
+        await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(offer));
+      } else if (!this.peerConnection!.remoteDescription) {
+        console.warn('⚠️ No offer provided and no remote description set. Waiting for offer...');
+        // We might want to throw here, but maybe we can wait for the offer to arrive via WebSocket
+        // For now, let's not throw immediately to avoid crashing UI, but negotiation effectively stalls
+        // untill offer arrives.
+      }
 
       // Create and send answer
-      const answer = await this.peerConnection!.createAnswer();
-      await this.peerConnection!.setLocalDescription(answer);
+      // We can only create answer if we have a remote description
+      if (this.peerConnection!.remoteDescription) {
+        const answer = await this.peerConnection!.createAnswer();
+        await this.peerConnection!.setLocalDescription(answer);
 
-      this.send({
-        type: 'answer',
-        fromUserId: this.userId,
-        toUserId: callerId,
-        callId: callId,
-        sdp: answer.sdp,
-        videoEnabled: enableVideo,
-      });
+        this.send({
+          type: 'answer',
+          fromUserId: this.userId,
+          toUserId: callerId,
+          callId: callId,
+          sdp: answer.sdp,
+          videoEnabled: enableVideo,
+        });
 
-      console.log('✅ Call accepted');
+        console.log('✅ Call accepted');
+      } else {
+        console.warn("⚠️ Cannot send answer yet, waiting for remote description (Offer)");
+      }
+
     } catch (error) {
       console.error('❌ Error accepting call:', error);
+      this.ringtoneManager.stop();
       this.onError?.(error instanceof Error ? error.message : 'Failed to accept call');
       this.cleanup();
     }
@@ -231,6 +259,9 @@ export class CallManager {
    * Reject a call
    */
   rejectCall(callerId: number, callId: number): void {
+    // Stop ringtone when rejecting
+    this.ringtoneManager.stop();
+
     this.send({
       type: 'call-rejected',
       fromUserId: this.userId,
@@ -244,6 +275,9 @@ export class CallManager {
    * End the current call
    */
   async endCall(): Promise<void> {
+    // Stop ringtone when ending call
+    this.ringtoneManager.stop();
+
     if (this.remoteUserId && this.callId) {
       this.send({
         type: 'call-ended',
@@ -349,7 +383,11 @@ export class CallManager {
       if (!message.sdp) {
         throw new Error('No SDP in offer');
       }
-      
+
+      // Play incoming ringtone when receiving an offer
+      await this.ringtoneManager.prepareAudio();
+      await this.ringtoneManager.play('incoming');
+
       this.remoteUserId = message.fromUserId;
       this.callId = message.callId;
       this.videoEnabled = message.videoEnabled || false;
@@ -364,6 +402,7 @@ export class CallManager {
       console.log('✅ Remote offer handled');
     } catch (error) {
       console.error('❌ Error handling remote offer:', error);
+      this.ringtoneManager.stop();
       this.onError?.(error instanceof Error ? error.message : 'Failed to handle offer');
     }
   }
@@ -376,6 +415,9 @@ export class CallManager {
       if (!message.sdp) {
         throw new Error('No SDP in answer');
       }
+
+      // Stop outgoing ringtone when call is answered
+      this.ringtoneManager.stop();
 
       const answer = new RTCSessionDescription({ type: 'answer', sdp: message.sdp });
       await this.peerConnection?.setRemoteDescription(answer);
@@ -435,6 +477,7 @@ export class CallManager {
    */
   private handleCallRejection(message: SignalingMessage): void {
     console.log('❌ Call rejected by remote peer');
+    this.ringtoneManager.stop();
     this.cleanup();
     this.onCallEnded?.();
   }
@@ -444,6 +487,7 @@ export class CallManager {
    */
   private handleRemoteCallEnd(message: SignalingMessage): void {
     console.log('📵 Remote peer ended call');
+    this.ringtoneManager.stop();
     this.cleanup();
     this.onCallEnded?.();
   }
@@ -528,6 +572,9 @@ export class CallManager {
    * Cleanup resources
    */
   private cleanup(): void {
+    // Stop any playing ringtones
+    this.ringtoneManager.stop();
+
     // Close peer connection
     if (this.peerConnection) {
       this.peerConnection.close();
@@ -555,10 +602,18 @@ export class CallManager {
    */
   destroy(): void {
     this.cleanup();
+    this.ringtoneManager.destroy();
     if (this.pingInterval) clearInterval(this.pingInterval);
     if (this.signalingConnection) {
       this.signalingConnection.close();
       this.signalingConnection = null;
     }
+  }
+
+  /**
+   * Get ringtone manager (for manual control if needed)
+   */
+  getRingtoneManager(): RingtoneManager {
+    return this.ringtoneManager;
   }
 }

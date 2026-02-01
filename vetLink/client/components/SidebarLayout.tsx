@@ -4,12 +4,36 @@ import { useAuth } from '@/lib/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { ReactNode } from 'react';
 
+import { RingtoneManager } from '@/lib/RingtoneManager';
+import { useEffect } from 'react';
+
 interface SidebarLayoutProps {
   children: ReactNode;
 }
 
 export default function SidebarLayout({ children }: SidebarLayoutProps) {
   const { user, isAuthenticated } = useAuth();
+
+  // Unlock audio context on first user interaction
+  useEffect(() => {
+    const unlockAudio = () => {
+      RingtoneManager.unlockAudio();
+      // Remove listeners after first successful unlock attempt
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

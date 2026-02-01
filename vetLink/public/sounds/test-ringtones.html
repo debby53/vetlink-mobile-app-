@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ringtone Test - VetLink</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .test-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.stop {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        button.stop:hover {
+            box-shadow: 0 8px 16px rgba(245, 101, 101, 0.4);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #004085;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #002752;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .icon {
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔔 Ringtone Test Page</h1>
+        <p class="subtitle">Test your VetLink call ringtones</p>
+
+        <div class="test-section">
+            <h3><span class="icon">📞</span> Incoming Call Ringtone</h3>
+            <p>This ringtone plays when someone calls you</p>
+            <audio id="incomingAudio" controls>
+                <source src="incoming.wav" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+            <div class="button-group">
+                <button onclick="playIncoming()">▶️ Play Incoming</button>
+                <button class="stop" onclick="stopIncoming()">⏹️ Stop</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3><span class="icon">📱</span> Outgoing Call Ringtone</h3>
+            <p>This ringtone plays when you call someone</p>
+            <audio id="outgoingAudio" controls>
+                <source src="outgoing.wav" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+            <div class="button-group">
+                <button onclick="playOutgoing()">▶️ Play Outgoing</button>
+                <button class="stop" onclick="stopOutgoing()">⏹️ Stop</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3><span class="icon">🔄</span> Loop Test</h3>
+            <p>Test ringtones with looping (as they work in actual calls)</p>
+            <div class="button-group">
+                <button onclick="playIncomingLoop()">🔁 Loop Incoming</button>
+                <button onclick="playOutgoingLoop()">🔁 Loop Outgoing</button>
+                <button class="stop" onclick="stopAll()">⏹️ Stop All</button>
+            </div>
+        </div>
+
+        <div id="status" class="status info">
+            Click any button above to test the ringtones
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ How it works:</strong>
+            • Ringtones loop automatically during calls<br>
+            • They stop when the call is answered, rejected, or ended<br>
+            • Browser autoplay policies are handled automatically<br>
+            • If you don't hear sound, check your browser's audio permissions
+        </div>
+    </div>
+
+    <script>
+        const incomingAudio = document.getElementById('incomingAudio');
+        const outgoingAudio = document.getElementById('outgoingAudio');
+        const statusDiv = document.getElementById('status');
+
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function playIncoming() {
+            try {
+                incomingAudio.loop = false;
+                incomingAudio.currentTime = 0;
+                incomingAudio.play();
+                showStatus('🔔 Playing incoming ringtone...', 'success');
+            } catch (error) {
+                showStatus('❌ Error playing incoming ringtone: ' + error.message, 'error');
+            }
+        }
+
+        function stopIncoming() {
+            incomingAudio.pause();
+            incomingAudio.currentTime = 0;
+            showStatus('⏹️ Incoming ringtone stopped', 'info');
+        }
+
+        function playOutgoing() {
+            try {
+                outgoingAudio.loop = false;
+                outgoingAudio.currentTime = 0;
+                outgoingAudio.play();
+                showStatus('📱 Playing outgoing ringtone...', 'success');
+            } catch (error) {
+                showStatus('❌ Error playing outgoing ringtone: ' + error.message, 'error');
+            }
+        }
+
+        function stopOutgoing() {
+            outgoingAudio.pause();
+            outgoingAudio.currentTime = 0;
+            showStatus('⏹️ Outgoing ringtone stopped', 'info');
+        }
+
+        function playIncomingLoop() {
+            try {
+                incomingAudio.loop = true;
+                incomingAudio.currentTime = 0;
+                incomingAudio.play();
+                showStatus('🔁 Incoming ringtone looping... (click Stop All to stop)', 'warning');
+            } catch (error) {
+                showStatus('❌ Error playing incoming ringtone: ' + error.message, 'error');
+            }
+        }
+
+        function playOutgoingLoop() {
+            try {
+                outgoingAudio.loop = true;
+                outgoingAudio.currentTime = 0;
+                outgoingAudio.play();
+                showStatus('🔁 Outgoing ringtone looping... (click Stop All to stop)', 'warning');
+            } catch (error) {
+                showStatus('❌ Error playing outgoing ringtone: ' + error.message, 'error');
+            }
+        }
+
+        function stopAll() {
+            incomingAudio.pause();
+            incomingAudio.currentTime = 0;
+            incomingAudio.loop = false;
+            outgoingAudio.pause();
+            outgoingAudio.currentTime = 0;
+            outgoingAudio.loop = false;
+            showStatus('⏹️ All ringtones stopped', 'info');
+        }
+
+        // Check if audio files exist
+        window.addEventListener('load', () => {
+            const testIncoming = new Audio('incoming.wav');
+            const testOutgoing = new Audio('outgoing.wav');
+
+            testIncoming.addEventListener('error', () => {
+                showStatus('⚠️ Warning: incoming.wav not found in current directory', 'error');
+            });
+
+            testOutgoing.addEventListener('error', () => {
+                showStatus('⚠️ Warning: outgoing.wav not found in current directory', 'error');
+            });
+
+            // Try to load
+            testIncoming.load();
+            testOutgoing.load();
+        });
+    </script>
+</body>
+
+</html>

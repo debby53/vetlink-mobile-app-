@@ -20,6 +20,7 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
+import { parseDate, formatDate } from '@/lib/dateUtils';
 
 export default function ViewDetails() {
   const { t } = useLanguage();
@@ -43,7 +44,7 @@ export default function ViewDetails() {
   const loadCaseDetails = async () => {
     setIsLoading(true);
     const loadingToastId = toast.loading('Loading case details...');
-    
+
     try {
       if (!caseId) {
         console.error('❌ Case ID not found');
@@ -62,7 +63,7 @@ export default function ViewDetails() {
         new Promise((_, reject) => setTimeout(() => reject(new Error('Case load timeout')), 15000))
       ]);
       console.log('✅ Case data loaded:', _caseData);
-      
+
       if (!_caseData) {
         console.error('❌ Case data is null or undefined');
         toast.dismiss(loadingToastId);
@@ -70,7 +71,7 @@ export default function ViewDetails() {
         setIsLoading(false);
         return;
       }
-      
+
       setCaseData(_caseData);
 
       // Set loading to false immediately after case data is loaded
@@ -79,15 +80,15 @@ export default function ViewDetails() {
       setIsLoading(false);
 
       // Load animal details in background
-      if (_caseData.animalId) {
+      if (((_caseData as any)?.animalId)) {
         try {
           console.log('🔄 Fetching animal details...');
-          const _animalData = await animalAPI.getAnimalById(_caseData.animalId);
+          const _animalData = await animalAPI.getAnimalById((_caseData as any).animalId);
           console.log('✅ Animal data loaded:', _animalData);
           setAnimalData(_animalData);
 
           // Load health records for the animal
-          const records = await healthRecordAPI.getHealthRecordsByAnimalId(_caseData.animalId);
+          const records = await healthRecordAPI.getHealthRecordsByAnimalId((_caseData as any).animalId);
           console.log('✅ Health records loaded:', records);
           setHealthRecords(records || []);
         } catch (animalErr) {
@@ -101,15 +102,15 @@ export default function ViewDetails() {
         const mediaList = await Promise.race([
           caseAPI.getMediaByCase(Number(caseId), user?.id),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Media load timeout')), 8000))
-        ]);
+        ]) as any[];
         console.log('✅ Media loaded:', mediaList);
-        if (mediaList && mediaList.length > 0) {
+        if (Array.isArray(mediaList) && mediaList.length > 0) {
           setMedia(mediaList);
         }
       } catch (mediaErr) {
         console.warn('⚠️ Failed to load media:', mediaErr);
-        if (_caseData.media) {
-          setMedia(_caseData.media);
+        if ((_caseData as any)?.media && Array.isArray((_caseData as any).media)) {
+          setMedia((_caseData as any).media);
         }
       }
     } catch (err) {
@@ -135,6 +136,81 @@ export default function ViewDetails() {
     } catch (err) {
       console.error('Error deleting case:', err);
       toast.error('Failed to delete case');
+    }
+  };
+
+  const handleEdit = () => {
+    // Navigate to edit case page (you may need to create this route)
+    toast.info('Edit functionality - Navigate to edit page');
+    // navigate(`/farmer/cases/edit/${caseId}`);
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareUrl = `${window.location.origin}/farmer/details/${caseId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Case link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleDownload = () => {
+    try {
+      // Generate a simple text report
+      const report = `
+CASE REPORT
+===========
+
+Case ID: CASE-${caseData.id}
+Title: ${caseData.title}
+Status: ${caseData.status}
+Type: ${caseData.caseType}
+Severity: ${caseData.severity}/10
+Created: ${formatDate(caseData.createdAt)}
+Last Updated: ${formatDate(caseData.updatedAt || caseData.createdAt)}
+
+Description:
+${caseData.description}
+
+${animalData ? `
+ANIMAL INFORMATION
+==================
+Name: ${animalData.name}
+Type: ${animalData.type}
+Breed: ${animalData.breed}
+Age: ${animalData.age}
+Gender: ${animalData.gender}
+` : ''}
+${healthRecords.length > 0 ? `
+HEALTH RECORDS
+==============
+${healthRecords.map((r, i) => `
+${i + 1}. ${formatDate(r.createdAt)}
+   Type: ${r.recordType}
+   Details: ${r.details}
+   ${r.diagnosis ? `Diagnosis: ${r.diagnosis}` : ''}
+   ${r.treatment ? `Treatment: ${r.treatment}` : ''}
+`).join('\n')}
+` : ''}
+      `;
+
+      // Create blob and download
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `case-${caseData.id}-report.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success('Case report downloaded!');
+    } catch (err) {
+      console.error('Failed to download:', err);
+      toast.error('Failed to download report');
     }
   };
 
@@ -236,13 +312,25 @@ export default function ViewDetails() {
 
           {/* Actions */}
           <div className="flex gap-2">
-            <button className="p-3 hover:bg-gray-100 rounded-lg transition-all" title={t('edit')}>
+            <button
+              onClick={handleEdit}
+              className="p-3 hover:bg-gray-100 rounded-lg transition-all"
+              title={t('edit')}
+            >
               <Edit2 className="h-5 w-5 text-gray-600" />
             </button>
-            <button className="p-3 hover:bg-gray-100 rounded-lg transition-all" title={t('share')}>
+            <button
+              onClick={handleShare}
+              className="p-3 hover:bg-gray-100 rounded-lg transition-all"
+              title={t('share')}
+            >
               <Share2 className="h-5 w-5 text-gray-600" />
             </button>
-            <button className="p-3 hover:bg-gray-100 rounded-lg transition-all" title={t('download')}>
+            <button
+              onClick={handleDownload}
+              className="p-3 hover:bg-gray-100 rounded-lg transition-all"
+              title={t('download')}
+            >
               <Download className="h-5 w-5 text-gray-600" />
             </button>
             <button
@@ -259,11 +347,11 @@ export default function ViewDetails() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <p className="text-xs font-medium text-muted-foreground mb-1">{t('created')}</p>
-            <p className="font-semibold text-foreground">{new Date(caseData.createdAt).toLocaleDateString()}</p>
+            <p className="font-semibold text-foreground">{formatDate(caseData.createdAt)}</p>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <p className="text-xs font-medium text-muted-foreground mb-1">{t('lastUpdated')}</p>
-            <p className="font-semibold text-foreground">{new Date(caseData.updatedAt || caseData.createdAt).toLocaleDateString()}</p>
+            <p className="font-semibold text-foreground">{formatDate(caseData.updatedAt || caseData.createdAt)}</p>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <p className="text-xs font-medium text-muted-foreground mb-1">{t('caseId')}</p>
@@ -283,8 +371,8 @@ export default function ViewDetails() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`py-3 px-1 font-medium text-sm capitalize border-b-2 transition-colors ${activeTab === tab
-                    ? 'border-green-600 text-green-600'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'border-green-600 text-green-600'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
               >
                 {t(tab) || tab}
@@ -373,7 +461,7 @@ export default function ViewDetails() {
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          <p className="font-semibold text-foreground">{new Date(record.createdAt).toLocaleDateString()}</p>
+                          <p className="font-semibold text-foreground">{formatDate(record.createdAt)}</p>
                         </div>
                         <p className="text-sm text-muted-foreground">{record.recordType}</p>
                       </div>
@@ -454,7 +542,7 @@ export default function ViewDetails() {
                         )}
                       </div>
                       <div className="pt-1">
-                        <p className="font-semibold text-foreground">{new Date(record.createdAt).toLocaleDateString()}</p>
+                        <p className="font-semibold text-foreground">{formatDate(record.createdAt)}</p>
                         <p className="text-sm text-muted-foreground">{record.details}</p>
                       </div>
                     </div>

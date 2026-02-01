@@ -12,17 +12,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enable a simple in-memory message broker
+        // Enable a simple in-memory broker
         config.enableSimpleBroker("/topic", "/queue");
-        // Set the prefix for destinations to send messages from the client
         config.setApplicationDestinationPrefixes("/app");
+        // config.setUserDestinationPrefix("/user"); // For private messages using convertAndSendToUser
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Register the endpoint for WebSocket connections
-        registry.addEndpoint("/ws/call")
-                .setAllowedOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost:8081", "http://localhost:8082")
-                .withSockJS();
+        // Endpoint for the client to connect
+        registry.addEndpoint("/ws-market").setAllowedOriginPatterns("*").withSockJS();
     }
 }

@@ -36,6 +36,11 @@ public class CaseController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<List<CaseDTO>> getAllCases() {
+        return ResponseEntity.ok(caseService.getAllCases());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CaseDTO> getCaseById(@PathVariable Long id) {
         try {

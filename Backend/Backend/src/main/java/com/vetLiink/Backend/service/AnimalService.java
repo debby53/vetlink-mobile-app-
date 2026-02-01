@@ -29,6 +29,8 @@ public class AnimalService {
                 .gender(animalDTO.getGender())
                 .farmer(farmer)
                 .healthStatus(animalDTO.getHealthStatus())
+                .weight(animalDTO.getWeight())
+                .specificAttributes(animalDTO.getSpecificAttributes())
                 .build();
 
         Animal savedAnimal = animalRepository.save(newAnimal);
@@ -55,6 +57,8 @@ public class AnimalService {
         animal.setAge(animalDTO.getAge());
         animal.setGender(animalDTO.getGender());
         animal.setHealthStatus(animalDTO.getHealthStatus());
+        animal.setWeight(animalDTO.getWeight());
+        animal.setSpecificAttributes(animalDTO.getSpecificAttributes());
 
         Animal updatedAnimal = animalRepository.save(animal);
         return convertToDTO(updatedAnimal);
@@ -74,6 +78,8 @@ public class AnimalService {
                 .gender(animal.getGender())
                 .farmerId(animal.getFarmer().getId())
                 .healthStatus(animal.getHealthStatus())
+                .weight(animal.getWeight())
+                .specificAttributes(animal.getSpecificAttributes())
                 .build();
     }
 }

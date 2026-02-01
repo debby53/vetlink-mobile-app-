@@ -39,6 +39,11 @@ export default function CallModal({
 
     callManagerRef.current = new CallManager(currentUserId);
 
+    // Prepare ringtone audio after user interaction
+    callManagerRef.current.getRingtoneManager().prepareAudio().catch(err => {
+      console.warn('Could not prepare ringtone audio:', err);
+    });
+
     callManagerRef.current.setOnLocalStream((stream) => {
       console.log('📹 Local stream ready');
       if (localVideoRef.current) {
@@ -68,8 +73,29 @@ export default function CallModal({
       toast.error(errorMsg);
     });
 
+    // If this is an outgoing call, initiate it immediately
+    if (!isIncoming && callData && callData.recipientId) {
+      console.log('🚀 Initiating outgoing call...');
+      // Small delay to ensure everything is ready
+      setTimeout(() => {
+        callManagerRef.current?.initiateCall(
+          callData.recipientId,
+          callData.id,
+          callData.callType === 'video'
+        ).catch(err => {
+          console.error('Failed to initiate call:', err);
+          setError('Failed to initiate connection');
+        });
+      }, 500);
+    }
+
     return () => {
-      // Don't destroy on cleanup to keep connection alive
+      // Cleanup call manager when modal closes
+      if (callManagerRef.current) {
+        console.log('🧹 Destroying CallManager instance');
+        callManagerRef.current.destroy();
+        callManagerRef.current = null;
+      }
     };
   }, [currentUserId, isOpen]);
 
@@ -90,7 +116,7 @@ export default function CallModal({
       await callManagerRef.current.acceptCall(
         callData.senderId,
         callData.id,
-        { type: 'offer', sdp: '' }, // This would be populated from actual offer
+        undefined,
         enableVideo
       );
 
@@ -190,9 +216,8 @@ export default function CallModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div
-        className={`bg-white rounded-lg shadow-xl w-full max-w-md ${
-          isVideoCall ? 'aspect-video max-w-2xl' : ''
-        }`}
+        className={`bg-white rounded-lg shadow-xl w-full max-w-md ${isVideoCall ? 'aspect-video max-w-2xl' : ''
+          }`}
       >
         {/* Header */}
         <div className="relative bg-gradient-to-r from-primary to-primary/80 text-white p-6 rounded-t-lg">
@@ -285,11 +310,10 @@ export default function CallModal({
               {/* Mute Button */}
               <button
                 onClick={handleToggleMute}
-                className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
-                  isMuted
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${isMuted
+                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted ? (
@@ -303,11 +327,10 @@ export default function CallModal({
               {isVideoCall && (
                 <button
                   onClick={handleToggleVideo}
-                  className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
-                    !isVideoOn
-                      ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                  className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${!isVideoOn
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
                   title={isVideoOn ? 'Stop camera' : 'Start camera'}
                 >
                   {isVideoOn ? (

@@ -40,6 +40,12 @@ public class Animal {
     @Column
     private String healthStatus;
 
+    @Column
+    private Double weight;
+
+    @Column(columnDefinition = "TEXT")
+    private String specificAttributes;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

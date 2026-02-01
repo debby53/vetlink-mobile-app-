@@ -4,6 +4,7 @@ import SidebarLayout from '@/components/SidebarLayout';
 import CallModal from '@/components/CallModal';
 import { useAuth } from '@/lib/AuthContext';
 import { messageAPI, userAPI, callAPI } from '@/lib/apiService';
+import { RingtoneManager } from '@/lib/RingtoneManager';
 import { toast } from 'sonner';
 import { Send, Search, Phone, Video, MoreVertical, Paperclip, X, Plus, Trash2, Edit2, Check } from 'lucide-react';
 
@@ -48,12 +49,12 @@ export default function CAHWMessages() {
     try {
       const allMessages = await messageAPI.getInboxMessages(user.id);
       const unreadMessages = await messageAPI.getUnreadMessages(user.id);
-      
+
       const uniquePartners = new Map();
 
       allMessages.forEach((msg: any) => {
         const partnerId = msg.senderId === user.id ? msg.recipientId : msg.senderId;
-        
+
         if (!uniquePartners.has(partnerId)) {
           uniquePartners.set(partnerId, msg);
         } else {
@@ -100,7 +101,7 @@ export default function CAHWMessages() {
     try {
       const msgs = await messageAPI.getConversation(user.id, selectedChat);
       console.log('Messages loaded:', msgs);
-      
+
       const sortedMsgs = (msgs || []).sort((a, b) => {
         const dateA = parseDate(a.createdAt).getTime();
         const dateB = parseDate(b.createdAt).getTime();
@@ -108,7 +109,7 @@ export default function CAHWMessages() {
       });
 
       setCurrentMessages(sortedMsgs);
-      
+
       if (sortedMsgs && sortedMsgs.length > 0) {
         for (const msg of sortedMsgs) {
           if (!msg.isRead && msg.recipientId === user.id) {
@@ -168,6 +169,13 @@ export default function CAHWMessages() {
   };
 
   const startCall = async (recipientId: number, callType: 'voice' | 'video') => {
+    // Immediate audio unlock/permission request on user interaction
+    try {
+      await RingtoneManager.unlockAudio();
+    } catch (e) {
+      console.warn('Audio unlock failed:', e);
+    }
+
     try {
       const call = await callAPI.initiateCall(recipientId, callType);
       setActiveCall(call);
@@ -220,9 +228,8 @@ export default function CAHWMessages() {
 
   const handleCallClose = () => {
     setShowCallModal(false);
-    if (activeCall?.status !== 'connected') {
-      endCall();
-    }
+    // Always end the call when closing the modal to ensure backend is updated
+    endCall();
   };
 
   useEffect(() => {
@@ -261,9 +268,9 @@ export default function CAHWMessages() {
   const formatMessageDate = (dateString: any) => {
     try {
       if (!dateString) return 'Unknown time';
-      
+
       let date: Date;
-      
+
       // Handle array format from Java LocalDateTime: [year, month, day, hour, minute, second, nano]
       if (Array.isArray(dateString)) {
         console.log('Array date format:', dateString);
@@ -273,7 +280,7 @@ export default function CAHWMessages() {
       } else if (typeof dateString === 'string') {
         // Try parsing as ISO 8601 (with or without milliseconds and timezone)
         date = new Date(dateString);
-        
+
         // If that failed, try other formats
         if (isNaN(date.getTime())) {
           // Try removing 'Z' and timezone info and parse again
@@ -285,17 +292,17 @@ export default function CAHWMessages() {
       } else {
         date = new Date(dateString);
       }
-      
+
       if (isNaN(date.getTime())) {
         console.warn('Invalid date:', dateString);
         return 'Invalid Date';
       }
-      
-      return date.toLocaleString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
+
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit'
       });
     } catch (err) {
@@ -311,8 +318,8 @@ export default function CAHWMessages() {
     loadDirectFarmerChat(userId);
   };
 
-  const filteredModalUsers = allUsers.filter(u => 
-    u.id !== user?.id && 
+  const filteredModalUsers = allUsers.filter(u =>
+    u.id !== user?.id &&
     u.name?.toLowerCase().includes(modalSearch.toLowerCase())
   );
 
@@ -324,7 +331,7 @@ export default function CAHWMessages() {
     setIsSearchingUsers(true);
     try {
       // Fetch all users and filter by name
-      const allUsers = await userAPI.getAllUsers?.();
+      const allUsers = await userAPI.getActiveUsers();
       if (allUsers) {
         const filtered = allUsers.filter((u: any) =>
           u.name?.toLowerCase().includes(query.toLowerCase()) && u.id !== user?.id
@@ -370,7 +377,7 @@ export default function CAHWMessages() {
       setCurrentMessages([...currentMessages, newMessage]);
       setMessageText('');
       toast.success('Message sent successfully');
-      
+
       // Refresh conversations to update last message and timestamp
       loadConversations();
     } catch (err: any) {
@@ -525,9 +532,8 @@ export default function CAHWMessages() {
                     <button
                       key={conv.id}
                       onClick={() => setSelectedChat(conv.id)}
-                      className={`w-full text-left p-4 hover:bg-gray-50 transition-all ${
-                        selectedChat === conv.id ? 'bg-blue-50 border-l-4 border-primary' : ''
-                      }`}
+                      className={`w-full text-left p-4 hover:bg-gray-50 transition-all ${selectedChat === conv.id ? 'bg-blue-50 border-l-4 border-primary' : ''
+                        }`}
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
@@ -569,7 +575,7 @@ export default function CAHWMessages() {
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
               </div>
-              
+
               {/* Search Input */}
               <div className="p-4 border-b border-gray-100">
                 <div className="relative">
@@ -584,7 +590,7 @@ export default function CAHWMessages() {
                   />
                 </div>
               </div>
-              
+
               {/* Users List */}
               <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
                 {filteredModalUsers.length === 0 ? (
@@ -648,7 +654,7 @@ export default function CAHWMessages() {
                   >
                     <Phone className="h-5 w-5 text-primary" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => startCall(selectedChat!, 'video')}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-all"
                     title="Start video call"
@@ -766,11 +772,10 @@ export default function CAHWMessages() {
                               </div>
                             ) : (
                               <div
-                                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
-                                  msg.senderId === user?.id
-                                    ? 'bg-green-600 text-white shadow-md'
-                                    : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
-                                }`}
+                                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.senderId === user?.id
+                                  ? 'bg-green-600 text-white shadow-md'
+                                  : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
+                                  }`}
                               >
                                 <p className="text-sm font-medium">{msg.content}</p>
                                 <p className={`text-xs mt-2 ${msg.senderId === user?.id ? 'text-green-100' : 'text-gray-500'}`}>

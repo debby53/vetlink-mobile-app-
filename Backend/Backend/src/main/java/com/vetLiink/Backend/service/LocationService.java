@@ -40,27 +40,6 @@ public class LocationService {
         return locationRepository.save(location);
     }
 
-    public boolean validateLocationInSameVillage(Location userLocation, Location caseLocation) {
-        if (userLocation == null || caseLocation == null) {
-            return false;
-        }
-
-        Location userVillage = getVillageFromLocation(userLocation);
-        Location caseVillage = getVillageFromLocation(caseLocation);
-
-        return userVillage != null && userVillage.getId().equals(caseVillage.getId());
-    }
-
-    public Location getVillageFromLocation(Location location) {
-        if (location.getType() == ELocationType.VILLAGE) {
-            return location;
-        }
-        if (location.getType() == ELocationType.CELL && location.getParentLocation() != null) {
-            return location.getParentLocation();
-        }
-        return null;
-    }
-
     public String getLocationHierarchy(Location location) {
         if (location == null) return "";
 

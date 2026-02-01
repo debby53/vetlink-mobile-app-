@@ -15,4 +15,6 @@ public class AnimalDTO {
     private String gender;
     private Long farmerId;
     private String healthStatus;
+    private Double weight;
+    private String specificAttributes;
 }

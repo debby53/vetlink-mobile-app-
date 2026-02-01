@@ -7,14 +7,14 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { healthRecordAPI, animalAPI } from '@/lib/apiService';
+import { healthRecordAPI, animalAPI, AnimalDTO } from '@/lib/apiService';
 import { toast } from 'sonner';
 
 export default function AddRecord() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [recordType, setRecordType] = useState('treatment');
-  const [animals, setAnimals] = useState<any[]>([]);
+  const [animals, setAnimals] = useState<AnimalDTO[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     animalId: '',
@@ -55,14 +55,21 @@ export default function AddRecord() {
 
     setIsSubmitting(true);
     try {
-      const newRecord = await healthRecordAPI.createHealthRecord({
+      const detailsText = `Title: ${formData.title}
+Date: ${formData.date}
+Veterinarian: ${formData.veterinarian || 'N/A'}
+Notes: ${formData.notes}
+Follow Up: ${formData.followUp || 'None'}
+Description: ${formData.description}`;
+
+      await healthRecordAPI.createHealthRecord({
         animalId: parseInt(formData.animalId),
         recordType: recordType,
         diagnosis: formData.findings || formData.description,
         treatment: formData.treatment || formData.medicines,
-        details: formData.description,
-        temperature: 0,
-        weight: 0,
+        details: detailsText,
+        temperature: undefined,
+        weight: undefined,
       });
 
       toast.success('Health record added successfully');
@@ -139,11 +146,10 @@ export default function AddRecord() {
             <button
               key={type.id}
               onClick={() => handleRecordTypeChange(type.id)}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                recordType === type.id
-                  ? 'border-green-600 bg-green-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`p-4 rounded-lg border-2 transition-all ${recordType === type.id
+                ? 'border-green-600 bg-green-50'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <div className="text-2xl mb-2">{type.icon}</div>
               <p className="font-semibold text-foreground">{type.label}</p>
@@ -218,8 +224,8 @@ export default function AddRecord() {
                     recordType === 'treatment'
                       ? 'e.g., Treatment for mastitis'
                       : recordType === 'vaccination'
-                      ? 'e.g., Annual vaccination'
-                      : 'e.g., Health check observation'
+                        ? 'e.g., Annual vaccination'
+                        : 'e.g., Health check observation'
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
                   required

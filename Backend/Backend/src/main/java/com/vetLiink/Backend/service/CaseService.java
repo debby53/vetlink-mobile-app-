@@ -79,6 +79,13 @@ public class CaseService {
     }
 
     @Transactional(readOnly = true)
+    public List<CaseDTO> getAllCases() {
+        return caseRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<CaseDTO> getCasesByFarmerId(Long farmerId) {
         return caseRepository.findByFarmerId(farmerId).stream()
                 .map(this::convertToDTO)
@@ -166,11 +173,10 @@ public class CaseService {
         Case caze = caseRepository.findById(caseId).orElseThrow(() -> new RuntimeException("Case not found"));
         User cahw = userRepository.findById(cahwId).orElseThrow(() -> new RuntimeException("CAHW not found"));
 
-        // Validate CAHW is in the same location as the case
+        // Validate CAHW is in the same location (sector) as the case
         if (cahw.getLocation() != null && caze.getLocation() != null) {
-            boolean sameVillage = locationService.validateLocationInSameVillage(cahw.getLocation(), caze.getLocation());
-            if (!sameVillage) {
-                throw new RuntimeException("CAHW must be in the same village to be assigned cases");
+            if (!cahw.getLocation().getId().equals(caze.getLocation().getId())) {
+                throw new RuntimeException("CAHW must be in the same sector to be assigned cases");
             }
         }
 

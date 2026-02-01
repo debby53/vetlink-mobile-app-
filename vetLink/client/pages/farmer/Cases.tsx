@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { caseAPI, animalAPI, CaseDTO, AnimalDTO } from '@/lib/apiService';
+import { formatDate } from '@/lib/dateUtils';
 
 export default function FarmerCases() {
   const { t } = useLanguage();
@@ -24,7 +25,7 @@ export default function FarmerCases() {
 
   const loadCases = async () => {
     if (!user?.id) return;
-    
+
     setIsLoading(true);
     setError(null);
     try {
@@ -122,8 +123,8 @@ export default function FarmerCases() {
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${statusFilter === status
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
                   }`}
               >
                 {status === 'all' ? t('allCases') : t(status)}
@@ -182,10 +183,10 @@ export default function FarmerCases() {
                       <p className="text-sm text-muted-foreground">{c.description}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${c.severity >= 7
-                        ? 'bg-red-100 text-red-800'
-                        : c.severity >= 5
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
+                      ? 'bg-red-100 text-red-800'
+                      : c.severity >= 5
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
                       }`}>
                       {t('severity')}: {c.severity}
                     </span>
@@ -203,7 +204,7 @@ export default function FarmerCases() {
                     <div>
                       <p className="text-xs text-muted-foreground">{t('date')}</p>
                       <p className="font-semibold text-foreground">
-                        {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
+                        {formatDate(c.createdAt)}
                       </p>
                     </div>
                     <div>

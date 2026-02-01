@@ -4,6 +4,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8888/api';
 export interface ProvinceDTO {
   id: number;
   name: string;
+  displayName?: string;
   code?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -12,6 +13,7 @@ export interface ProvinceDTO {
 export interface DistrictDTO {
   id: number;
   name: string;
+  displayName?: string;
   code?: string;
   provinceId: number;
   provinceName?: string;
@@ -22,6 +24,7 @@ export interface DistrictDTO {
 export interface SectorDTO {
   id: number;
   name: string;
+  displayName?: string;
   code?: string;
   districtId: number;
   districtName?: string;

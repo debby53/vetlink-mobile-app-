@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const API_BASE = 'http://localhost:8888/api';
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
   role: 'farmer' | 'veterinarian' | 'cahw' | 'admin';
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       const newUser: User = {
-        id: data.userId || data.id || Math.random().toString(36).substr(2, 9),
+        id: Number(data.userId || data.id),
         name: data.name || email.split('@')[0],
         email: data.email || email,
         role: (data.role || role) as any,
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       const newUser: User = {
-        id: data.userId || data.id,
+        id: Number(data.userId || data.id),
         name: data.name || phone || 'User',
         email: data.email || phone,
         role: (data.role || 'farmer') as any,
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       const newUser: User = {
-        id: data.userId || data.id || Math.random().toString(36).substr(2, 9),
+        id: Number(data.userId || data.id),
         name: data.name || name,
         email: data.email || email,
         role: (data.role || role) as any,

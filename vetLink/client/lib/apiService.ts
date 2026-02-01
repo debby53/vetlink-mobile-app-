@@ -42,6 +42,8 @@ export interface AnimalDTO {
   gender: string;
   farmerId: number;
   healthStatus: string;
+  specificAttributes?: string; // JSON string of specific fields
+  weight?: number;
   createdAt?: string;
 }
 

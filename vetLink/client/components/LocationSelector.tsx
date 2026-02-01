@@ -75,8 +75,6 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
         const data = await locationService.getSectorsByDistrictId(parseInt(selectedDistrict));
         setSectors(data);
         setSelectedSector('');
-        setVillages([]);
-        setCells([]);
       } catch (error) {
         toast.error('Failed to load sectors');
       }
@@ -85,53 +83,14 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
     loadSectors();
   }, [selectedDistrict]);
 
-  // Load villages when sector changes
+  // Notify parent when sector is selected
   useEffect(() => {
-    const loadVillages = async () => {
-      if (!selectedSector) {
-        setVillages([]);
-        return;
-      }
-      try {
-        const data = await locationService.getVillagesBySectorId(parseInt(selectedSector));
-        setVillages(data);
-        setSelectedVillage('');
-        setCells([]);
-      } catch (error) {
-        toast.error('Failed to load villages');
-      }
-    };
-
-    loadVillages();
-  }, [selectedSector]);
-
-  // Load cells when village changes
-  useEffect(() => {
-    const loadCells = async () => {
-      if (!selectedVillage) {
-        setCells([]);
-        return;
-      }
-      try {
-        const data = await locationService.getCellsByVillageId(parseInt(selectedVillage));
-        setCells(data);
-        setSelectedCell('');
-      } catch (error) {
-        toast.error('Failed to load cells');
-      }
-    };
-
-    loadCells();
-  }, [selectedVillage]);
-
-  // Notify parent when cell is selected
-  useEffect(() => {
-    if (selectedCell) {
+    if (selectedSector) {
       const sectorName = sectors.find(s => s.id.toString() === selectedSector)?.name || '';
       const districtName = districts.find(d => d.id.toString() === selectedDistrict)?.name || '';
-      onLocationSelect(parseInt(selectedCell), sectorName, districtName);
+      onLocationSelect(parseInt(selectedSector), sectorName, districtName);
     }
-  }, [selectedCell, onLocationSelect, sectors, districts, selectedSector, selectedDistrict]);
+  }, [selectedSector, onLocationSelect, sectors, districts, selectedDistrict]);
 
   if (loading && provinces.length === 0) {
     return <div className="text-sm text-muted-foreground">Loading locations...</div>;
@@ -148,7 +107,7 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
           <SelectContent>
             {provinces.map((province) => (
               <SelectItem key={province.id} value={province.id.toString()}>
-                {province.name}
+                {province.displayName || province.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -165,7 +124,7 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
             <SelectContent>
               {districts.map((district) => (
                 <SelectItem key={district.id} value={district.id.toString()}>
-                  {district.name}
+                  {district.displayName || district.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -183,43 +142,7 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
             <SelectContent>
               {sectors.map((sector) => (
                 <SelectItem key={sector.id} value={sector.id.toString()}>
-                  {sector.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {selectedSector && (
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Village</label>
-          <Select value={selectedVillage} onValueChange={setSelectedVillage}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Village" />
-            </SelectTrigger>
-            <SelectContent>
-              {villages.map((village) => (
-                <SelectItem key={village.id} value={village.id.toString()}>
-                  {village.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {selectedVillage && (
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Cell</label>
-          <Select value={selectedCell} onValueChange={setSelectedCell}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Cell" />
-            </SelectTrigger>
-            <SelectContent>
-              {cells.map((cell) => (
-                <SelectItem key={cell.id} value={cell.id.toString()}>
-                  {cell.name}
+                  {sector.displayName || sector.name}
                 </SelectItem>
               ))}
             </SelectContent>
