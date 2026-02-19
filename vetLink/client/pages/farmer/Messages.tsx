@@ -75,6 +75,7 @@ export default function FarmerMessages() {
             phone: partnerData?.phone || '',
             avatar: partnerName.charAt(0).toUpperCase(),
             type: partnerData?.role || 'CAHW',
+            locationId: partnerData?.locationId, // Capture location
             lastMessage: msg.content,
             timestamp: parseDate(msg.createdAt).toLocaleDateString(),
             unread: unreadMessages.filter((m: any) => m.senderId === partnerId && !m.isRead).length,
@@ -82,9 +83,18 @@ export default function FarmerMessages() {
         })
       );
 
-      setConversations(convs);
-      if (convs.length > 0 && !selectedChat) {
-        setSelectedChat(convs[0].id);
+      // Apply restriction: Farmers can only see conversations with CAHWs in their sector
+      let filteredConvs = convs;
+      if (user.role?.toUpperCase() === 'FARMER') {
+        filteredConvs = convs.filter(c =>
+          (c.type?.toUpperCase() === 'CAHW') &&
+          (!user.locationId || !c.locationId || String(c.locationId) === String(user.locationId))
+        );
+      }
+
+      setConversations(filteredConvs);
+      if (filteredConvs.length > 0 && !selectedChat) {
+        setSelectedChat(filteredConvs[0].id);
       }
     } catch (err: any) {
       console.error('Error loading conversations:', err);
@@ -149,7 +159,20 @@ export default function FarmerMessages() {
   const loadAllUsers = async () => {
     try {
       const users = await userAPI.getActiveUsers();
-      setAllUsers(users || []);
+
+      if (user?.role?.toUpperCase() === 'FARMER' && users) {
+        // Restriction: Farmers can only see CAHWs in the same sector (location)
+        const filteredUsers = users.filter((u: any) =>
+          u.role === 'CAHW' &&
+          u.locationId &&
+          user.locationId &&
+          String(u.locationId) === String(user.locationId)
+        );
+        console.log('Filtered users for farmer:', filteredUsers.length);
+        setAllUsers(filteredUsers);
+      } else {
+        setAllUsers(users || []);
+      }
     } catch (err) {
       console.error('Error loading users:', err);
     }
@@ -331,9 +354,18 @@ export default function FarmerMessages() {
       // Fetch all active users and filter by name
       const allUsers = await userAPI.getActiveUsers();
       if (allUsers) {
-        const filtered = allUsers.filter((u: any) =>
+        let filtered = allUsers.filter((u: any) =>
           u.name?.toLowerCase().includes(query.toLowerCase()) && u.id !== user?.id
         );
+
+        // Apply Farmer restriction: Only CAHWs in same sector
+        if (user?.role?.toUpperCase() === 'FARMER') {
+          filtered = filtered.filter((u: any) =>
+            u.role === 'CAHW' &&
+            (!user.locationId || !u.locationId || String(u.locationId) === String(user.locationId))
+          );
+        }
+
         setSearchUsers(filtered);
       }
     } catch (err: any) {
@@ -770,8 +802,8 @@ export default function FarmerMessages() {
                             ) : (
                               <div
                                 className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.senderId === user?.id
-                                    ? 'bg-green-600 text-white shadow-md'
-                                    : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
+                                  ? 'bg-green-600 text-white shadow-md'
+                                  : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
                                   }`}
                               >
                                 <p className="text-sm font-medium">{msg.content}</p>

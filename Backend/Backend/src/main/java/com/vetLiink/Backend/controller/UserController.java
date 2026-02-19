@@ -101,6 +101,20 @@ public class UserController {
         }
     }
 
+    // New endpoint for users to update their own profile
+    @PutMapping("/{id}/profile")
+    public ResponseEntity<?> updateOwnProfile(@PathVariable Long id, @RequestBody UserDTO request) {
+        try {
+            // Users can only update their own profile (name, email, phone, location)
+            // Admin-only fields like role, status, etc. are ignored
+            UserDTO updatedUser = userService.updateUserProfile(id, request);
+            return ResponseEntity.ok(updatedUser);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {

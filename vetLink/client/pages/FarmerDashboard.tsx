@@ -176,7 +176,7 @@ export default function FarmerDashboard() {
                     <div key={caseItem.id} className="p-6 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <p className="font-semibold text-foreground">{animal?.name || 'Unknown'}</p>
+                          <p className="font-semibold text-foreground">{animal?.name || t('unknown')}</p>
                           <p className="text-sm text-muted-foreground mt-1">{caseItem.description}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -272,14 +272,14 @@ export default function FarmerDashboard() {
                     className="w-full bg-green-500/20 hover:bg-green-500/30 transition-all backdrop-blur rounded-lg px-4 py-3 text-white font-medium text-sm text-left flex items-center gap-2 mb-2"
                   >
                     <Zap className="h-4 w-4 text-green-200" />
-                    Advisories
+                    {t('advisories')}
                   </button>
                   <button
                     onClick={() => navigate('/market')}
                     className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 transition-all backdrop-blur rounded-lg px-4 py-3 text-white font-medium text-sm text-left flex items-center gap-2"
                   >
                     <TrendingUp className="h-4 w-4 text-yellow-200" />
-                    Marketplace
+                    {t('marketplace')}
                   </button>
                 </div>
               </div>
@@ -292,7 +292,7 @@ export default function FarmerDashboard() {
                 <div>
                   <h4 className="font-semibold text-orange-900">{t('healthAlert')}</h4>
                   <p className="text-sm text-orange-800 mt-1">
-                    Monitor your animals regularly for any health changes.
+                    {t('monitorHealth')}
                   </p>
                   <button className="mt-3 text-sm font-semibold text-orange-600 hover:text-orange-700">
                     {t('getHelp')} →

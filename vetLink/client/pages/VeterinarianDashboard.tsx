@@ -4,7 +4,7 @@ import SidebarLayout from '@/components/SidebarLayout';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
 import { toast } from 'sonner';
-import { caseAPI, userAPI, CaseDTO } from '@/lib/apiService';
+import { caseAPI, userAPI, animalAPI, CaseDTO } from '@/lib/apiService';
 import {
   AlertCircle,
   CheckCircle,
@@ -35,12 +35,68 @@ export default function VeterinarianDashboard() {
       setIsLoading(true);
       try {
         // Load cases assigned to veterinarian
-        const casesData = await caseAPI.getCasesByVeterinarianId(Number(user.id));
-        setCases(casesData || []);
+        const assignedCases = await caseAPI.getCasesByVeterinarianId(Number(user.id));
+
+        // Load cases in the same sector/location
+        let sectorCases: CaseDTO[] = [];
+        try {
+          sectorCases = await caseAPI.getCasesByVeterinarianLocation(Number(user.id));
+        } catch (e) {
+          console.warn('Failed to fetch sector cases', e);
+        }
+
+        // Combine and dedup
+        const assignedIds = new Set(assignedCases.map((c: any) => c.id));
+        const newSectorCases = sectorCases.filter((c: any) => !assignedIds.has(c.id));
+        const allCases = [...assignedCases, ...newSectorCases];
+
+        setCases(allCases);
 
         // Load farmers served
-        const farmers = await userAPI.getUsersByRole('farmer');
-        setFarmersCount(farmers?.length || 0);
+        const farmersList = await userAPI.getUsersByRole('farmer');
+        setFarmersCount(farmersList?.length || 0);
+
+        // Fallback: Enrich cases with names if missing from backend
+        // This handles the case where backend hasn't been restarted to include new fields
+        let casesUpdated = false;
+        const enrichedCases = [...allCases];
+
+        // 1. Enrich Farmer Names
+        if (farmersList) {
+          const farmerMap = new Map(farmersList.map((f: any) => [f.id, f]));
+          enrichedCases.forEach(c => {
+            if (!c.farmerName && c.farmerId && farmerMap.has(c.farmerId)) {
+              c.farmerName = farmerMap.get(c.farmerId).name;
+              casesUpdated = true;
+            }
+          });
+        }
+
+        // 2. Enrich Animal Names (Fetch only missing)
+        const missingAnimalIds = new Set(enrichedCases.filter(c => !c.animalName && c.animalId).map(c => c.animalId));
+        if (missingAnimalIds.size > 0) {
+          try {
+            await Promise.all(Array.from(missingAnimalIds).map(async (id) => {
+              try {
+                const animal = await animalAPI.getAnimalById(id);
+                enrichedCases.forEach(c => {
+                  if (c.animalId === id && !c.animalName) {
+                    c.animalName = animal.name;
+                    casesUpdated = true;
+                  }
+                });
+              } catch (e) {
+                console.warn(`Failed to fetch animal ${id}`, e);
+              }
+            }));
+          } catch (e) {
+            console.warn('Error fetching missing animals', e);
+          }
+        }
+
+        if (casesUpdated) {
+          setCases(enrichedCases);
+        }
       } catch (err) {
         console.error('Failed to load dashboard data', err);
         toast.error('Failed to load dashboard data');
@@ -60,7 +116,7 @@ export default function VeterinarianDashboard() {
     return caseDate.getMonth() === now.getMonth() && caseDate.getFullYear() === now.getFullYear();
   }).length;
   const successRate = cases.length === 0 ? 0 : Math.round((resolvedThisMonth / cases.length) * 100);
-  const avgResponseHours = cases.length === 0 ? 'N/A' : `${((cases.reduce((sum, c) => {
+  const avgResponseHours = cases.length === 0 ? t('na') : `${((cases.reduce((sum, c) => {
     const created = c.createdAt ? new Date(c.createdAt).getTime() : 0;
     const updated = c.updatedAt ? new Date(c.updatedAt).getTime() : created;
     return sum + Math.max(0, (updated - created) / (1000 * 60 * 60));
@@ -70,7 +126,7 @@ export default function VeterinarianDashboard() {
     {
       label: t('activeCases'),
       value: String(activeCases),
-      change: `${Math.max(0, activeCases - (cases.length > 0 ? resolvedThisMonth : 0))} pending`,
+      change: `${Math.max(0, activeCases - (cases.length > 0 ? resolvedThisMonth : 0))} ${t('pending')}`,
       icon: AlertCircle,
       color: 'text-red-500',
       bg: 'bg-red-50',
@@ -78,7 +134,7 @@ export default function VeterinarianDashboard() {
     {
       label: t('resolvedThisMonth'),
       value: String(resolvedThisMonth),
-      change: `${successRate}% success rate`,
+      change: `${successRate}% ${t('resolutionRate')}`,
       icon: CheckCircle,
       color: 'text-green-500',
       bg: 'bg-green-50',
@@ -86,7 +142,7 @@ export default function VeterinarianDashboard() {
     {
       label: t('avgResponseTime'),
       value: avgResponseHours,
-      change: 'Real-time data',
+      change: t('liveMonitoring'),
       icon: Clock,
       color: 'text-blue-500',
       bg: 'bg-blue-50',
@@ -94,7 +150,7 @@ export default function VeterinarianDashboard() {
     {
       label: t('farmersServed'),
       value: String(farmersCount),
-      change: '+12 this month',
+      change: `+12 ${t('thisMonth')}`,
       icon: Users,
       color: 'text-purple-500',
       bg: 'bg-purple-50',
@@ -129,7 +185,7 @@ export default function VeterinarianDashboard() {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
+            <p className="text-muted-foreground">{t('loading')}</p>
           </div>
         </div>
       </SidebarLayout>
@@ -183,16 +239,6 @@ export default function VeterinarianDashboard() {
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-foreground">{t('activeCases')}</h2>
-                <button
-                  onClick={() => {
-                    toast.info('Creating new case');
-                    navigate('/veterinarian/cases?action=new');
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-all text-sm"
-                >
-                  <Plus className="h-5 w-5" />
-                  {t('newCase')}
-                </button>
               </div>
 
               {/* Search & Filter */}
@@ -231,19 +277,19 @@ export default function VeterinarianDashboard() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Case ID
+                      {t('caseId')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Farmer
+                      {t('farmer')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Animal
+                      {t('animal')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Status
+                      {t('status')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Action
+                      {t('action')}
                     </th>
                   </tr>
                 </thead>
@@ -254,22 +300,22 @@ export default function VeterinarianDashboard() {
                         CASE-{caseItem.id}
                       </td>
                       <td className="px-6 py-4 text-sm text-foreground">
-                        {caseItem.farmerId || 'Unknown'}
+                        {caseItem.farmerName || t('unknown')}
                       </td>
                       <td className="px-6 py-4 text-sm text-foreground">
-                        {caseItem.animalId || 'N/A'}
+                        {caseItem.animalName || t('na')}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        {(caseItem.status === 'PENDING' || caseItem.status === 'IN_PROGRESS') && (
+                        {['OPEN', 'ASSIGNED', 'RECEIVED', 'PENDING', 'IN_PROGRESS'].includes(caseItem.status || '') && (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 font-semibold text-xs">
                             <Clock className="h-3 w-3" />
-                            {t('active')}
+                            {caseItem.status}
                           </span>
                         )}
-                        {caseItem.status === 'RESOLVED' && (
+                        {['RESOLVED', 'COMPLETED', 'CLOSED'].includes(caseItem.status || '') && (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 font-semibold text-xs">
                             <CheckCircle className="h-3 w-3" />
-                            {t('resolved')}
+                            {caseItem.status}
                           </span>
                         )}
                       </td>
@@ -338,12 +384,12 @@ export default function VeterinarianDashboard() {
                         CASE-{caseItem.id}
                       </p>
                       <p className="text-xs text-orange-700 mt-1">
-                        {caseItem.description || 'Follow-up needed'}
+                        {caseItem.description || t('followupNeeded')}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No pending follow-ups</p>
+                  <p className="text-sm text-muted-foreground">{t('noPendingFollowups')}</p>
                 )}
               </div>
             </div>

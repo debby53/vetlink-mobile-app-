@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarLayout from '@/components/SidebarLayout';
 import { Plus, Search, Filter, Eye, Archive, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -14,6 +24,7 @@ export default function FarmerCases() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [caseToDelete, setCaseToDelete] = useState<number | null>(null);
   const [cases, setCases] = useState<any[]>([]);
   const [animals, setAnimals] = useState<{ [key: number]: AnimalDTO }>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -54,15 +65,21 @@ export default function FarmerCases() {
     }
   };
 
-  const handleDeleteCase = async (caseId: number) => {
-    if (confirm(t('confirmDelete'))) {
-      try {
-        await caseAPI.deleteCase(caseId);
-        setCases(cases.filter(c => c.id !== caseId));
-        toast.success(t('caseDeleted') || 'Case deleted successfully');
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to delete case');
-      }
+  const handleDeleteClick = (caseId: number) => {
+    setCaseToDelete(caseId);
+  };
+
+  const confirmDelete = async () => {
+    if (!caseToDelete) return;
+
+    try {
+      await caseAPI.deleteCase(caseToDelete);
+      setCases(cases.filter(c => c.id !== caseToDelete));
+      toast.success(t('caseDeleted') || 'Case deleted successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete case');
+    } finally {
+      setCaseToDelete(null);
     }
   };
 
@@ -224,8 +241,9 @@ export default function FarmerCases() {
                       <Eye className="h-4 w-4" />
                       {t('viewDetails')}
                     </button>
+
                     <button
-                      onClick={() => handleDeleteCase(c.id)}
+                      onClick={() => handleDeleteClick(c.id)}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-all font-medium text-sm"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -241,7 +259,24 @@ export default function FarmerCases() {
             </div>
           ) : null}
         </div>
+
+        <AlertDialog open={!!caseToDelete} onOpenChange={(open) => !open && setCaseToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('deleteThisCase') || 'Delete Case?'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('deleteCaseConfirmMessage') || 'This action cannot be undone.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('cancel') || 'Cancel'}</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                {t('delete') || 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-    </SidebarLayout>
+    </SidebarLayout >
   );
 }

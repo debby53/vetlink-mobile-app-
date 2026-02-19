@@ -27,7 +27,7 @@ export default function NearbyCases() {
   const [cases, setCases] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCertified, setIsCertified] = useState(false);
-  
+
   // Modal states
   const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -44,7 +44,7 @@ export default function NearbyCases() {
 
   const handleMarkAsReceived = async (caseId: number) => {
     try {
-      await caseAPI.markCaseAsReceived(caseId);
+      await caseAPI.markCaseAsReceived(caseId, user?.id);
       setCases(cases.map(c => c.id === caseId ? { ...c, status: 'RECEIVED' } : c));
       toast.success('Case marked as received - farmer notified');
     } catch (err: any) {
@@ -67,7 +67,11 @@ export default function NearbyCases() {
 
     setIsSubmitting(true);
     try {
-      await caseAPI.markCaseAsCompleted(selectedCaseForModal, { diagnosis, treatment });
+      await caseAPI.markCaseAsCompleted(selectedCaseForModal, {
+        diagnosis,
+        treatment,
+        cahwId: user?.id
+      });
       setCases(cases.map(c => c.id === selectedCaseForModal ? { ...c, status: 'COMPLETED' } : c));
       toast.success('Case marked as completed and farmer notified');
       setShowCompletionModal(false);
@@ -147,10 +151,10 @@ export default function NearbyCases() {
               caze.severity > 7
                 ? "critical"
                 : caze.severity > 5
-                ? "high"
-                : caze.severity > 2
-                ? "medium"
-                : "low",
+                  ? "high"
+                  : caze.severity > 2
+                    ? "medium"
+                    : "low",
             status: caze.status,
             location: farmer?.location || "Unknown",
             lastUpdated: caze.updatedAt
@@ -279,116 +283,116 @@ export default function NearbyCases() {
         {/* Cases Grid */}
         {isCertified && (
           <div className="grid gap-4">
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading cases...</div>
-          ) : (
-            filteredCases.map((caseItem) => (
-              <div
-                key={caseItem.id}
-                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-foreground">{caseItem.farmer}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getUrgencyColor(caseItem.urgency)} flex items-center gap-1`}>
-                          {getUrgencyIcon(caseItem.urgency)}
-                          {caseItem.urgency.charAt(0).toUpperCase() + caseItem.urgency.slice(1)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">{caseItem.issue}</p>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading cases...</div>
+            ) : (
+              filteredCases.map((caseItem) => (
+                <div
+                  key={caseItem.id}
+                  className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-bold text-foreground">{caseItem.farmer}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getUrgencyColor(caseItem.urgency)} flex items-center gap-1`}>
+                            {getUrgencyIcon(caseItem.urgency)}
+                            {caseItem.urgency.charAt(0).toUpperCase() + caseItem.urgency.slice(1)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">{caseItem.issue}</p>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{caseItem.distance}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{caseItem.lastUpdated}</span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">{caseItem.animal}</span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">{caseItem.location}</span>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>{caseItem.distance}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{caseItem.lastUpdated}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">{caseItem.animal}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            <span className="font-medium">{caseItem.location}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-3 pt-4 border-t border-gray-200 flex-wrap">
-                    {caseItem.status === 'OPEN' && (
+                    <div className="flex items-center gap-3 pt-4 border-t border-gray-200 flex-wrap">
+                      {caseItem.status === 'OPEN' && (
+                        <button
+                          onClick={() => handleMarkAsReceived(caseItem.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-all flex-1 min-w-[150px]"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Mark Received
+                        </button>
+                      )}
+                      {(caseItem.status === 'OPEN' || caseItem.status === 'RECEIVED' || caseItem.status === 'IN_PROGRESS') && (
+                        <button
+                          onClick={() => handleMarkAsCompleted(caseItem.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg font-medium transition-all flex-1 min-w-[150px]"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Mark Completed
+                        </button>
+                      )}
+                      {(caseItem.status === 'RECEIVED' || caseItem.status === 'IN_PROGRESS') && !caseItem.isEscalated && (
+                        <button
+                          onClick={() => handleEscalateCase(caseItem.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg font-medium transition-all flex-1 min-w-[150px]"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                          Escalate to Vet
+                        </button>
+                      )}
+                      {caseItem.isEscalated && (
+                        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-sm">
+                          <AlertTriangle className="h-4 w-4" />
+                          Escalated
+                        </div>
+                      )}
+                      <a href={`tel:${caseItem.phone}`} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg font-medium transition-all min-w-[150px]">
+                        <PhoneCall className="h-4 w-4" />
+                        Call
+                      </a>
                       <button
-                        onClick={() => handleMarkAsReceived(caseItem.id)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-all flex-1 min-w-[150px]"
+                        onClick={() => {
+                          toast.success(`Opening message with ${caseItem.farmer}...`);
+                          navigate(`/cahw/messages?case=${caseItem.id}&farmer=${caseItem.farmerId}`, { state: { case: caseItem } });
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg font-medium transition-all min-w-[150px]"
                       >
-                        <CheckCircle className="h-4 w-4" />
-                        Mark Received
+                        <MessageSquare className="h-4 w-4" />
+                        Message
                       </button>
-                    )}
-                    {(caseItem.status === 'OPEN' || caseItem.status === 'RECEIVED' || caseItem.status === 'IN_PROGRESS') && (
                       <button
-                        onClick={() => handleMarkAsCompleted(caseItem.id)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg font-medium transition-all flex-1 min-w-[150px]"
+                        onClick={() => {
+                          toast.success(`Loading case details...`);
+                          navigate(`/farmer/details/${caseItem.id}`, { state: { case: caseItem } });
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-foreground rounded-lg font-medium transition-all min-w-[150px]"
                       >
-                        <CheckCircle className="h-4 w-4" />
-                        Mark Completed
+                        View Details
                       </button>
-                    )}
-                    {(caseItem.status === 'RECEIVED' || caseItem.status === 'IN_PROGRESS') && !caseItem.isEscalated && (
-                      <button
-                        onClick={() => handleEscalateCase(caseItem.id)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg font-medium transition-all flex-1 min-w-[150px]"
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                        Escalate to Vet
-                      </button>
-                    )}
-                    {caseItem.isEscalated && (
-                      <div className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-sm">
-                        <AlertTriangle className="h-4 w-4" />
-                        Escalated
-                      </div>
-                    )}
-                    <a href={`tel:${caseItem.phone}`} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg font-medium transition-all min-w-[150px]">
-                      <PhoneCall className="h-4 w-4" />
-                      Call
-                    </a>
-                    <button
-                      onClick={() => {
-                        toast.success(`Opening message with ${caseItem.farmer}...`);
-                        navigate(`/cahw/messages?case=${caseItem.id}&farmer=${caseItem.farmerId}`, { state: { case: caseItem } });
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg font-medium transition-all min-w-[150px]"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      Message
-                    </button>
-                    <button
-                      onClick={() => {
-                        toast.success(`Loading case details...`);
-                        navigate(`/farmer/details/${caseItem.id}`, { state: { case: caseItem } });
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-foreground rounded-lg font-medium transition-all min-w-[150px]"
-                    >
-                      View Details
-                    </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
 
-          {filteredCases.length === 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No cases found</h3>
-              <p className="text-muted-foreground">{searchQuery ? "No cases match your search criteria." : "No nearby cases available at the moment."}</p>
-            </div>
-          )}
-        </div>
+            {filteredCases.length === 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No cases found</h3>
+                <p className="text-muted-foreground">{searchQuery ? "No cases match your search criteria." : "No nearby cases available at the moment."}</p>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

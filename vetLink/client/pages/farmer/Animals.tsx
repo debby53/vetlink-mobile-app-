@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarLayout from '@/components/SidebarLayout';
 import { Plus, Search, Heart, AlertCircle, Trash2, LayoutGrid, List as ListIcon, ChevronLeft, ChevronRight, Filter, Edit } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -363,36 +373,23 @@ export default function Animals() {
 
       </div>
 
-      {/* Custom Delete Confirmation Modal */}
-      {deleteAnimalId && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <AlertCircle className="h-6 w-6 text-red-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{t('deleteConfirmTitle') || 'Delete Animal?'}</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                {t('deleteConfirmMessage') || 'Are you sure you want to delete this animal? This action cannot be undone.'}
-              </p>
-              <div className="flex gap-3 w-full">
-                <button
-                  onClick={() => setDeleteAnimalId(null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-                >
-                  {t('delete')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteAnimalId} onOpenChange={(open) => !open && setDeleteAnimalId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle') || 'Delete Animal?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteConfirmMessage') || 'Are you sure you want to delete this animal? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarLayout>
   );
 }

@@ -1,6 +1,10 @@
 package com.vetLiink.Backend.service;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -35,13 +39,13 @@ public class CaseService {
         User farmer = userRepository.findById(caseDTO.getFarmerId())
                 .orElseThrow(() -> new RuntimeException("Farmer not found"));
         
-        Location location = locationRepository.findById(caseDTO.getLocationId())
-                .orElseThrow(() -> new RuntimeException("Location not found"));
-
-        // Validate that the case location matches the farmer's location
-        if (farmer.getLocation() != null && !farmer.getLocation().getId().equals(location.getId())) {
-            throw new RuntimeException("Case location must match farmer's location");
+        // Use farmer's location for the case
+        // Location should be set during farmer signup, so this should always exist
+        if (farmer.getLocation() == null) {
+            throw new RuntimeException("Farmer has no location set. Please update your profile with your location.");
         }
+        
+        Location location = farmer.getLocation();
 
         Case newCase = Case.builder()
                 .farmer(farmer)
@@ -332,17 +336,37 @@ public class CaseService {
 
     // Mark case as received by veterinarian/CAHW
     @Transactional
-    public CaseDTO markCaseAsReceived(Long caseId) {
+    public CaseDTO markCaseAsReceived(Long caseId, Long userId) {
         Case caze = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found"));
+        
+        // Assign the user if provided and not already assigned
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            if (user.getRole() == User.UserRole.VETERINARIAN) {
+                if (caze.getVeterinarian() == null) {
+                    caze.setVeterinarian(user);
+                }
+            } else if (user.getRole() == User.UserRole.CAHW) {
+                if (caze.getCahw() == null) {
+                    caze.setCahw(user);
+                }
+            }
+        }
         
         caze.setStatus(Case.CaseStatus.RECEIVED);
         Case updatedCase = caseRepository.save(caze);
         
         // Notify farmer that case was received
         try {
-            String message = "Your case '" + caze.getTitle() + "' has been received by " +
-                    (caze.getVeterinarian() != null ? "veterinarian" : "CAHW");
+            String handlerRole = "provider";
+            if (caze.getVeterinarian() != null) handlerRole = "veterinarian";
+            else if (caze.getCahw() != null) handlerRole = "CAHW";
+            
+            String message = "Your case '" + caze.getTitle() + "' has been received by " + handlerRole;
+            
             notificationService.createNotification(
                     caze.getFarmer().getId(),
                     "Case Received",
@@ -362,10 +386,24 @@ public class CaseService {
         Case caze = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found"));
         
+        // Update assignments if provided in DTO
+        if (caseDTO.getVeterinarianId() != null) {
+            User vet = userRepository.findById(caseDTO.getVeterinarianId())
+                    .orElseThrow(() -> new RuntimeException("Veterinarian not found"));
+            caze.setVeterinarian(vet);
+        }
+        
+        if (caseDTO.getCahwId() != null) {
+            User cahw = userRepository.findById(caseDTO.getCahwId())
+                    .orElseThrow(() -> new RuntimeException("CAHW not found"));
+            caze.setCahw(cahw);
+        }
+        
         caze.setStatus(Case.CaseStatus.COMPLETED);
         caze.setDiagnosis(caseDTO.getDiagnosis());
         caze.setTreatment(caseDTO.getTreatment());
         caze.setResolution(caseDTO.getResolution());
+        caze.setResolvedAt(java.time.LocalDateTime.now());
         
         Case updatedCase = caseRepository.save(caze);
         
@@ -468,7 +506,10 @@ public class CaseService {
         return CaseDTO.builder()
                 .id(caze.getId())
                 .farmerId(caze.getFarmer() != null ? caze.getFarmer().getId() : null)
+                .farmerName(caze.getFarmer() != null ? caze.getFarmer().getName() : "Unknown")
                 .animalId(caze.getAnimal() != null ? caze.getAnimal().getId() : null)
+                .animalName(caze.getAnimal() != null ? caze.getAnimal().getName() : "Unknown")
+                .animalType(caze.getAnimal() != null ? caze.getAnimal().getType() : "Unknown")
                 .veterinarianId(caze.getVeterinarian() != null ? caze.getVeterinarian().getId() : null)
                 .cahwId(caze.getCahw() != null ? caze.getCahw().getId() : null)
                 .locationId(caze.getLocation() != null ? caze.getLocation().getId() : null)
@@ -488,6 +529,35 @@ public class CaseService {
                 .escalationReason(caze.getEscalationReason())
                 .media(mediaList)
                 .build();
+    }
+    public List<Map<String, Object>> getCaseTrends() {
+        Map<String, Map<String, Integer>> trends = new TreeMap<>(); // Sorted by month
+        List<Case> cases = caseRepository.findAll();
+        
+        for (Case c : cases) {
+            String month = c.getCreatedAt().getYear() + "-" + String.format("%02d", c.getCreatedAt().getMonthValue());
+            trends.putIfAbsent(month, new HashMap<>(Map.of("cases", 0, "resolved", 0)));
+            
+            Map<String, Integer> entry = trends.get(month);
+            entry.put("cases", entry.get("cases") + 1);
+            
+            if (c.getStatus() == Case.CaseStatus.COMPLETED || c.getStatus() == Case.CaseStatus.CLOSED) {
+                entry.put("resolved", entry.get("resolved") + 1);
+            }
+        }
+        
+        return trends.entrySet().stream()
+            .map(e -> Map.of("name", (Object)e.getKey(), "cases", e.getValue().get("cases"), "resolved", e.getValue().get("resolved")))
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getCaseTypeDistribution() {
+        Map<String, Long> distribution = caseRepository.findAll().stream()
+                .collect(Collectors.groupingBy(Case::getCaseType, Collectors.counting()));
+        
+        return distribution.entrySet().stream()
+                .map(e -> Map.of("name", (Object)e.getKey(), "value", e.getValue()))
+                .collect(Collectors.toList());
     }
 }
 

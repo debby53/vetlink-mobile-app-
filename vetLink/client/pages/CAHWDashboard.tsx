@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarLayout from '@/components/SidebarLayout';
 import { useAuth } from '@/lib/AuthContext';
+import { useLanguage } from '@/lib/LanguageContext';
 import { trainingAPI, certificationAPI } from '@/lib/apiService';
 import { toast } from 'sonner';
 import {
@@ -23,6 +24,7 @@ import {
 
 export default function CAHWDashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
   const [trainings, setTrainings] = useState<any[]>([]);
@@ -51,7 +53,7 @@ export default function CAHWDashboard() {
 
   const stats = [
     {
-      label: 'Training Hours',
+      label: t('trainingHours'),
       value: '48',
       change: '+8 this month',
       icon: BookOpen,
@@ -59,7 +61,7 @@ export default function CAHWDashboard() {
       bg: 'bg-purple-50',
     },
     {
-      label: 'Certifications',
+      label: t('certifications'),
       value: '3',
       change: '1 in progress',
       icon: Award,
@@ -67,7 +69,7 @@ export default function CAHWDashboard() {
       bg: 'bg-yellow-50',
     },
     {
-      label: 'Community Members',
+      label: t('communityMembers'),
       value: '156',
       change: '+12 this month',
       icon: Users,
@@ -75,7 +77,7 @@ export default function CAHWDashboard() {
       bg: 'bg-blue-50',
     },
     {
-      label: 'Performance Score',
+      label: t('performanceScore'),
       value: '92%',
       change: 'Excellent',
       icon: TrendingUp,
@@ -143,10 +145,10 @@ export default function CAHWDashboard() {
         {/* Header */}
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            Welcome back, {user?.name}! 👋
+            {t('welcomeBack')}, {user?.name}! 👋
           </h1>
           <p className="text-muted-foreground">
-            Continue your learning journey and support your community
+            {t('headerSubtitleCAHW')}
           </p>
         </div>
 
@@ -184,15 +186,15 @@ export default function CAHWDashboard() {
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <BookOpen className="h-6 w-6 text-purple-500" />
-                Training Modules
+                {t('trainingModules')}
               </h2>
             </div>
 
             <div className="divide-y divide-gray-100">
               {isLoading ? (
-                <div className="p-6 text-center text-muted-foreground">Loading training modules...</div>
+                <div className="p-6 text-center text-muted-foreground">{t('loadingTraining')}</div>
               ) : trainingModules.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground">No training modules available</div>
+                <div className="p-6 text-center text-muted-foreground">{t('noTrainingModules')}</div>
               ) : (
                 trainingModules.map((module) => (
                   <div key={module.id} className="p-6 hover:bg-gray-50 transition-colors">
@@ -234,7 +236,7 @@ export default function CAHWDashboard() {
 
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>
-                          {module.completedLessons} of {module.lessons} lessons
+                          {module.completedLessons} {t('of')} {module.lessons} {t('lessons')}
                         </span>
                         <ArrowRight className="h-4 w-4" />
                       </div>
@@ -246,7 +248,7 @@ export default function CAHWDashboard() {
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           <div className="bg-purple-50 rounded-lg p-3">
                             <p className="text-xs text-muted-foreground mb-1">
-                              Duration
+                              {t('duration')}
                             </p>
                             <p className="font-semibold text-foreground">
                               {module.duration}
@@ -254,7 +256,7 @@ export default function CAHWDashboard() {
                           </div>
                           <div className="bg-blue-50 rounded-lg p-3">
                             <p className="text-xs text-muted-foreground mb-1">
-                              Lessons
+                              {t('lessons')}
                             </p>
                             <p className="font-semibold text-foreground">
                               {module.completedLessons}/{module.lessons}
@@ -275,7 +277,7 @@ export default function CAHWDashboard() {
                             }`}
                         >
                           <Play className="h-4 w-4" />
-                          {module.completed ? 'Review' : 'Continue Learning'}
+                          {module.completed ? t('reviewTraining') : t('continueTraining')}
                         </button>
                       </div>
                     )}
@@ -291,7 +293,7 @@ export default function CAHWDashboard() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Zap className="h-5 w-5 text-blue-500" />
-                Quick Actions
+                {t('quickActions')}
               </h3>
               <div className="space-y-3">
                 <button
@@ -299,21 +301,21 @@ export default function CAHWDashboard() {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm"
                 >
                   <AlertCircle className="h-4 w-4" />
-                  Log Treatment
+                  {t('logTreatment')}
                 </button>
                 <button
                   onClick={() => navigate('/cahw/advisories')}
                   className="w-full bg-green-500/10 hover:bg-green-500/20 text-green-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-green-200"
                 >
                   <Lightbulb className="h-4 w-4" />
-                  Advisories
+                  {t('advisories')}
                 </button>
                 <button
                   onClick={() => navigate('/market')}
                   className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-yellow-200"
                 >
                   <TrendingUp className="h-4 w-4" />
-                  Marketplace
+                  {t('marketplace')}
                 </button>
               </div>
             </div>
@@ -322,7 +324,7 @@ export default function CAHWDashboard() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Award className="h-5 w-5 text-yellow-500" />
-                Certifications
+                {t('certifications')}
               </h3>
               <div className="space-y-3">
                 {certList.map((cert) => (
@@ -340,7 +342,7 @@ export default function CAHWDashboard() {
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs font-medium text-green-600 flex items-center gap-1">
                           <CheckCircle className="h-3 w-3" />
-                          Completed
+                          {t('completed')}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {cert.expiresIn}
@@ -350,7 +352,7 @@ export default function CAHWDashboard() {
                       <div className="mt-2">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-medium text-purple-600">
-                            In Progress
+                            {t('inProgress')}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {cert.progress}%
@@ -373,19 +375,19 @@ export default function CAHWDashboard() {
             <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white shadow-lg">
               <h3 className="font-bold mb-4 flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Community Impact
+                {t('communityImpact')}
               </h3>
               <div className="space-y-3">
                 <div className="bg-white/20 rounded-lg p-3 backdrop-blur">
-                  <p className="text-sm opacity-90">Farmers Assisted</p>
+                  <p className="text-sm opacity-90">{t('farmersAssisted')}</p>
                   <p className="text-2xl font-bold">156</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-3 backdrop-blur">
-                  <p className="text-sm opacity-90">Animals Treated</p>
+                  <p className="text-sm opacity-90">{t('animalsTreated')}</p>
                   <p className="text-2xl font-bold">428</p>
                 </div>
                 <div className="bg-white/20 rounded-lg p-3 backdrop-blur">
-                  <p className="text-sm opacity-90">Success Rate</p>
+                  <p className="text-sm opacity-90">{t('successRate')}</p>
                   <p className="text-2xl font-bold">94%</p>
                 </div>
               </div>
@@ -396,9 +398,9 @@ export default function CAHWDashboard() {
               <div className="flex gap-3">
                 <Zap className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-blue-900">Great Progress!</h4>
+                  <h4 className="font-semibold text-blue-900">{t('greatProgress')}</h4>
                   <p className="text-sm text-blue-800 mt-1">
-                    You're on track to earn your Advanced Vaccination certification by next month.
+                    {t('greatProgressDesc')}
                   </p>
                   <button
                     onClick={() => {
@@ -407,7 +409,7 @@ export default function CAHWDashboard() {
                     }}
                     className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
                   >
-                    View Progress →
+                    {t('viewProgress')} →
                   </button>
                 </div>
               </div>
@@ -418,7 +420,7 @@ export default function CAHWDashboard() {
         {/* Recent Activity */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-foreground">Recent Activity</h2>
+            <h2 className="text-lg font-bold text-foreground">{t('recentActivity')}</h2>
           </div>
 
           <div className="divide-y divide-gray-100">
@@ -454,7 +456,7 @@ export default function CAHWDashboard() {
               }}
               className="text-primary font-semibold text-sm hover:underline flex items-center gap-2"
             >
-              View All Activity
+              {t('viewAllActivity')}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

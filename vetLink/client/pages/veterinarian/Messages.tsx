@@ -7,11 +7,21 @@ import { messageAPI, userAPI, callAPI, MessageDTO, UserDTO } from '@/lib/apiServ
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
+interface Conversation {
+  partnerId: number;
+  name: string;
+  type: string;
+  avatar: string;
+  lastMessage: string;
+  timestamp: any; // Using any to handle various date formats from backend
+  unread: number;
+}
+
 export default function Messages() {
   const { user } = useAuth();
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [messageText, setMessageText] = useState('');
-  const [conversations, setConversations] = useState<MessageDTO[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<MessageDTO[]>([]);
   const [allUsers, setAllUsers] = useState<UserDTO[]>([]);
   const [showUserSelector, setShowUserSelector] = useState(false);
@@ -539,8 +549,8 @@ export default function Messages() {
                     ) : (
                       <div
                         className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.senderId === user?.id
-                            ? 'bg-green-600 text-white shadow-md'
-                            : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
+                          ? 'bg-green-600 text-white shadow-md'
+                          : 'bg-white text-gray-900 border border-gray-300 shadow-sm'
                           }`}
                       >
                         <p className="text-sm font-medium">{msg.content}</p>

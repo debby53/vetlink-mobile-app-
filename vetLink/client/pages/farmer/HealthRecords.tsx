@@ -49,8 +49,8 @@ export default function HealthRecords() {
 
       setAnimals(animalsMap);
       setRecords(allRecords.sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
+        const dateA = new Date(a.recordDate || a.createdAt || 0).getTime();
+        const dateB = new Date(b.recordDate || b.createdAt || 0).getTime();
         return dateB - dateA; // Most recent first
       }));
     } catch (err: any) {
@@ -204,7 +204,7 @@ export default function HealthRecords() {
                         {t('date')}
                       </div>
                       <p className="font-semibold text-foreground">
-                        {record.createdAt ? new Date(record.createdAt).toLocaleDateString() : 'N/A'}
+                        {record.recordDate ? new Date(record.recordDate).toLocaleDateString() : (record.createdAt ? new Date(record.createdAt).toLocaleDateString() : 'N/A')}
                       </p>
                     </div>
                     <div>
@@ -254,11 +254,11 @@ export default function HealthRecords() {
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('recordTypeLabel') || 'Record Type'}</label>
                   <select name="recordType" required defaultValue={editingRecord?.recordType} className="w-full p-2 border rounded-lg">
-                    <option value="Checkup">Regular Checkup</option>
-                    <option value="Vaccination">Vaccination</option>
-                    <option value="Treatment">Treatment</option>
-                    <option value="Injury">Injury</option>
-                    <option value="Surgery">Surgery</option>
+                    <option value="Checkup">{t('regularCheckup') || 'Regular Checkup'}</option>
+                    <option value="Vaccination">{t('vaccination') || 'Vaccination'}</option>
+                    <option value="Treatment">{t('treatment') || 'Treatment'}</option>
+                    <option value="Injury">{t('injury') || 'Injury'}</option>
+                    <option value="Surgery">{t('surgery') || 'Surgery'}</option>
                   </select>
                 </div>
 
@@ -282,7 +282,7 @@ export default function HealthRecords() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('details')}</label>
-                  <textarea name="details" required defaultValue={editingRecord?.details} rows={3} className="w-full p-2 border rounded-lg" placeholder="Enter detailed notes here..."></textarea>
+                  <textarea name="details" required defaultValue={editingRecord?.details} rows={3} className="w-full p-2 border rounded-lg" placeholder={t('detailsPlaceholder') || "Enter detailed notes here..."}></textarea>
                 </div>
               </div>
 

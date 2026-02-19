@@ -49,7 +49,7 @@ export default function Login() {
         await loginWithPhone(identifier);
         setStep('otp');
       } catch (err: any) {
-        setError(err.message || 'Failed to send verification code');
+        setError(err.message || t('failedToSendCode'));
       } finally {
         setIsLoading(false);
       }
@@ -57,7 +57,7 @@ export default function Login() {
       // Email flow -> Ask Password
       setStep('password');
     } else {
-      setError('Please enter a valid email or phone number');
+      setError(t('validIdentifier'));
     }
   };
 
@@ -88,13 +88,13 @@ export default function Login() {
 
     try {
       if (!otp) {
-        setError('Please enter the verification code');
+        setError(t('enterVerificationCode'));
         return;
       }
       await verifyOtp(identifier, otp);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Invalid code');
+      setError(err.message || t('invalidCode'));
     } finally {
       setIsLoading(false);
     }
@@ -164,7 +164,7 @@ export default function Login() {
               <form onSubmit={handleIdentifierSubmit} className="space-y-6">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    Email or Phone Number
+                    {t('emailOrPhone')}
                   </label>
                   <div className="relative">
                     {/* Dynamic Icon */}
@@ -177,7 +177,7 @@ export default function Login() {
                       type="text"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="email@example.com or 07..."
+                      placeholder={t('identifierPlaceholder')}
                       className="w-full pl-10 rounded-lg border border-border bg-white px-4 py-2 text-foreground placeholder-muted-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                       autoFocus
                     />
@@ -189,7 +189,7 @@ export default function Login() {
                   disabled={isLoading}
                   className="w-full rounded-lg bg-primary px-4 py-3 font-semibold text-white transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Continue'}
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : t('continue')}
                   {!isLoading && <ArrowRight className="h-5 w-5" />}
                 </button>
               </form>
@@ -199,7 +199,7 @@ export default function Login() {
               <form onSubmit={handlePasswordLogin} className="space-y-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-muted-foreground">{identifier}</span>
-                  <button type="button" onClick={handleReset} className="text-sm text-primary hover:underline">Change</button>
+                  <button type="button" onClick={handleReset} className="text-sm text-primary hover:underline">{t('change')}</button>
                 </div>
 
                 <div>
@@ -232,7 +232,7 @@ export default function Login() {
 
                 <div className="flex justify-end">
                   <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot password?
+                    {t('forgotPassword')}
                   </Link>
                 </div>
 
@@ -251,23 +251,23 @@ export default function Login() {
               <form onSubmit={handleOtpVerify} className="space-y-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-muted-foreground">{identifier}</span>
-                  <button type="button" onClick={handleReset} className="text-sm text-primary hover:underline">Change</button>
+                  <button type="button" onClick={handleReset} className="text-sm text-primary hover:underline">{t('change')}</button>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    Verification Code
+                    {t('verificationCode')}
                   </label>
                   <input
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter 6-digit code"
+                    placeholder={t('enterCodePlaceholder')}
                     className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground placeholder-muted-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-center tracking-widest text-lg"
                     autoFocus
                   />
                   <p className="mt-2 text-xs text-muted-foreground text-center">
-                    We sent a code to your phone. Valid for 5 minutes.
+                    {t('otpSent')}
                   </p>
                 </div>
 
@@ -276,7 +276,7 @@ export default function Login() {
                   disabled={isLoading}
                   className="w-full rounded-lg bg-primary px-4 py-3 font-semibold text-white transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Login'}
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : t('verifyAndLogin')}
                   {!isLoading && <ArrowRight className="h-5 w-5" />}
                 </button>
               </form>

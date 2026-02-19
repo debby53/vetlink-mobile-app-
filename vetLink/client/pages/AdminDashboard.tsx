@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarLayout from '@/components/SidebarLayout';
 import { useAuth } from '@/lib/AuthContext';
+import { useLanguage } from '@/lib/LanguageContext';
 import { userAPI, caseAPI } from '@/lib/apiService';
 import { toast } from 'sonner';
 import {
@@ -22,6 +23,7 @@ import {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState('all');
@@ -47,7 +49,7 @@ export default function AdminDashboard() {
 
   const stats = [
     {
-      label: 'Total Users',
+      label: t('totalUsers'),
       value: users.length.toString(),
       change: '+45 this month',
       icon: Users,
@@ -55,7 +57,7 @@ export default function AdminDashboard() {
       bg: 'bg-blue-50',
     },
     {
-      label: 'Active Sessions',
+      label: t('activeSessions'),
       value: '347',
       change: '28% of total users',
       icon: Activity,
@@ -63,7 +65,7 @@ export default function AdminDashboard() {
       bg: 'bg-green-50',
     },
     {
-      label: 'System Health',
+      label: t('systemHealth'),
       value: '99.8%',
       change: 'All services operational',
       icon: Shield,
@@ -71,7 +73,7 @@ export default function AdminDashboard() {
       bg: 'bg-purple-50',
     },
     {
-      label: 'Alerts',
+      label: t('alerts'),
       value: '3',
       change: '2 need attention',
       icon: AlertCircle,
@@ -85,7 +87,7 @@ export default function AdminDashboard() {
     name: u.name,
     email: u.email,
     role: u.role?.toLowerCase() || 'user',
-    status: u.isActive ? 'active' : 'inactive',
+    status: (u.status === 'ACTIVE' || u.active === true || u.isActive === true) ? 'active' : 'inactive',
     joinDate: u.createdAt,
     activity: 'Recently',
   }));
@@ -93,19 +95,19 @@ export default function AdminDashboard() {
   const systemAlerts = [
     {
       id: 1,
-      title: 'Database backup needed',
+      title: t('databaseBackup'),
       severity: 'warning',
       timestamp: '30 minutes ago',
     },
     {
       id: 2,
-      title: 'High API response time',
+      title: t('apiResponseTime'),
       severity: 'warning',
       timestamp: '1 hour ago',
     },
     {
       id: 3,
-      title: 'User registration spam detected',
+      title: t('spamDetected'),
       severity: 'critical',
       timestamp: '2 hours ago',
     },
@@ -113,25 +115,25 @@ export default function AdminDashboard() {
 
   const analytics = [
     {
-      metric: 'Cases Resolved',
+      metric: t('casesResolved'),
       value: '3,456',
       trend: '+12%',
       color: 'text-green-600',
     },
     {
-      metric: 'Avg Response Time',
+      metric: t('avgResponseTime'),
       value: '2.1h',
       trend: '-5%',
       color: 'text-green-600',
     },
     {
-      metric: 'User Satisfaction',
+      metric: t('userSatisfaction'),
       value: '4.6/5',
       trend: '+2%',
       color: 'text-green-600',
     },
     {
-      metric: 'System Uptime',
+      metric: t('systemUptime'),
       value: '99.8%',
       trend: '+0.1%',
       color: 'text-green-600',
@@ -160,19 +162,12 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">
-              Admin Dashboard 🛠️
+              Admin {t('dashboard')} 🛠️
             </h1>
             <p className="text-muted-foreground">
-              System overview, user management, and analytics
+              {t('adminOverview')}
             </p>
           </div>
-          <button
-            onClick={() => navigate('/admin/applications')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <Users className="h-5 w-5" />
-            Review Applications
-          </button>
         </div>
 
         {/* Stats Grid */}
@@ -208,7 +203,7 @@ export default function AdminDashboard() {
           <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-foreground mb-4">
-                User Management
+                {t('userManagement')}
               </h2>
 
               {/* Search & Filter */}
@@ -217,7 +212,7 @@ export default function AdminDashboard() {
                   <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search users by name or email..."
+                    placeholder={t('searchUsersPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -247,27 +242,27 @@ export default function AdminDashboard() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Name
+                      {t('name')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Email
+                      {t('email')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Role
+                      {t('role')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Status
+                      {t('status')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Action
+                      {t('action')}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {isLoading ? (
-                    <tr><td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">Loading users...</td></tr>
+                    <tr><td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">{t('loading')}</td></tr>
                   ) : filteredUsers.length === 0 ? (
-                    <tr><td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">No users found</td></tr>
+                    <tr><td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">{t('noUsersFound')}</td></tr>
                   ) : (
                     filteredUsers.map((u) => (
                       <tr key={u.id} className="hover:bg-gray-50 transition-colors">
@@ -289,12 +284,12 @@ export default function AdminDashboard() {
                           {u.status === 'active' ? (
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 font-semibold text-xs">
                               <CheckCircle className="h-3 w-3" />
-                              Active
+                              {t('active')}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-800 font-semibold text-xs">
                               <AlertCircle className="h-3 w-3" />
-                              Inactive
+                              {t('inactive')}
                             </span>
                           )}
                         </td>
@@ -324,7 +319,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Zap className="h-5 w-5 text-blue-500" />
-                Quick Actions
+                {t('quickActions')}
               </h3>
               <div className="space-y-3">
                 <button
@@ -332,21 +327,21 @@ export default function AdminDashboard() {
                   className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-yellow-200"
                 >
                   <TrendingUp className="h-4 w-4" />
-                  Manage Market
+                  {t('manageMarket')}
                 </button>
                 <button
                   onClick={() => navigate('/admin/trainings')}
                   className="w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-purple-200"
                 >
                   <BookOpen className="h-4 w-4" />
-                  Manage Trainings
+                  {t('manageTrainings')}
                 </button>
                 <button
                   onClick={() => navigate('/admin/settings')}
                   className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-4 py-3 font-medium transition-all flex items-center justify-center gap-2 shadow-sm border border-gray-200"
                 >
                   <Settings className="h-4 w-4" />
-                  System Settings
+                  {t('systemConfig')}
                 </button>
               </div>
             </div>
@@ -354,7 +349,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-red-500" />
-                System Alerts
+                {t('alerts')}
               </h3>
               <div className="space-y-3">
                 {systemAlerts.map((alert) => (
@@ -380,7 +375,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Key Metrics
+                {t('keyMetrics')}
               </h3>
               <div className="space-y-4">
                 {analytics.map((item, index) => (
@@ -405,20 +400,20 @@ export default function AdminDashboard() {
             <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white shadow-lg">
               <h3 className="font-bold mb-4 flex items-center gap-2">
                 <Lock className="h-5 w-5" />
-                Security Status
+                {t('securityStatus')}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm opacity-90">SSL/TLS</span>
-                  <span className="text-green-300 font-semibold">Active</span>
+                  <span className="text-sm opacity-90">{t('sslTls')}</span>
+                  <span className="text-green-300 font-semibold">{t('active')}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm opacity-90">Data Encryption</span>
-                  <span className="text-green-300 font-semibold">Active</span>
+                  <span className="text-sm opacity-90">{t('dataEncryption')}</span>
+                  <span className="text-green-300 font-semibold">{t('active')}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm opacity-90">Backup Status</span>
-                  <span className="text-yellow-300 font-semibold">Pending</span>
+                  <span className="text-sm opacity-90">{t('backupStatus')}</span>
+                  <span className="text-yellow-300 font-semibold">{t('pending')}</span>
                 </div>
                 <button
                   onClick={() => {
@@ -427,7 +422,7 @@ export default function AdminDashboard() {
                   }}
                   className="w-full mt-4 bg-white/20 hover:bg-white/30 transition-all backdrop-blur rounded-lg px-4 py-2 text-white font-medium text-sm"
                 >
-                  View Details
+                  {t('viewDetails')}
                 </button>
               </div>
             </div>

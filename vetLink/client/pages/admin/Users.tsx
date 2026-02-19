@@ -237,12 +237,7 @@ export default function AdminUsers() {
 
   // Helper to determine status Badge
   const getStatusBadge = (user: any) => {
-    // If user is intentionally locked (active=false), show INACTIVE
-    if (user.active === false) {
-      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">INACTIVE</span>;
-    }
-
-    // Otherwise show specific status
+    // Prefer explicit backend status first (e.g., deleted users become SUSPENDED)
     const status = user.status || 'ACTIVE';
     let colorClass = 'bg-gray-100 text-gray-800';
 
@@ -250,6 +245,9 @@ export default function AdminUsers() {
     else if (status === 'SUSPENDED') colorClass = 'bg-red-100 text-red-800';
     else if (status === 'TRAINING_REQUIRED') colorClass = 'bg-blue-100 text-blue-800';
     else if (status === 'PENDING_VERIFICATION') colorClass = 'bg-yellow-100 text-yellow-800';
+    else if (user.active === false) {
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">INACTIVE</span>;
+    }
 
     return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colorClass}`}>
       {status.replace(/_/g, ' ')}

@@ -1,5 +1,6 @@
 package com.vetLiink.Backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Data
@@ -11,6 +12,9 @@ public class UserDTO {
     private String name;
     private String email;
     private String role;
+    
+    @JsonProperty("phone")
+    private String phoneNumber;
     private Boolean active;
     private String status;
     private Long locationId;

@@ -1,16 +1,10 @@
 import { useState, useEffect } from 'react';
 import SidebarLayout from '@/components/SidebarLayout';
-import LocationSelector from '@/components/LocationSelector';
 import CaseMediaUpload from '@/components/CaseMediaUpload';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Plus,
   AlertCircle,
-  Clock,
-  MapPin,
-  FileText,
-  Upload,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -26,7 +20,6 @@ export default function NewCase() {
     issue: '',
     duration: '',
     severity: 'medium',
-    cellId: '',
     description: '',
     attachments: [] as File[],
   });
@@ -41,10 +34,6 @@ export default function NewCase() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleLocationSelect = (cellId: number) => {
-    setFormData(prev => ({ ...prev, cellId: cellId.toString() }));
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFormData(prev => ({
@@ -56,12 +45,8 @@ export default function NewCase() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.cellId) {
-      toast.error('Please select a location');
-      return;
-    }
     if (!user?.id) {
-      toast.error('User not authenticated');
+      toast.error(t('userNotAuthenticated') || 'User not authenticated');
       return;
     }
 
@@ -78,11 +63,16 @@ export default function NewCase() {
       // Find the animal from selected animal
       const selectedAnimal = animals.find(a => a.id.toString() === formData.animalId);
       if (!selectedAnimal) {
-        toast.error('Please select a valid animal');
+        toast.error(t('selectValidAnimal') || 'Please select a valid animal');
         setIsSubmitting(false);
         return;
       }
 
+      /* 
+         Remove locationId as per user request. 
+         Case location should be derived from the farmer's profile on the backend.
+         This also fixes the TypeScript error since locationId is not in CaseDTO.
+      */
       const newCase = await caseAPI.createCase({
         farmerId: user.id,
         animalId: parseInt(formData.animalId),
@@ -90,16 +80,15 @@ export default function NewCase() {
         description: formData.description,
         caseType: selectedAnimal.type,
         severity: severityMap[formData.severity] || 5,
-        locationId: parseInt(formData.cellId),
         status: 'OPEN',
       });
 
       setCaseId(newCase.id);
-      toast.success('Case created successfully');
+      toast.success(t('caseCreatedSuccess') || 'Case created successfully');
       setStep(3);
     } catch (err: any) {
       console.error('Error creating case:', err);
-      toast.error(err.message || 'Failed to create case');
+      toast.error(err.message || t('failedToCreateCase') || 'Failed to create case');
     } finally {
       setIsSubmitting(false);
     }
@@ -119,7 +108,7 @@ export default function NewCase() {
       setAnimals(farmerAnimals);
     } catch (err: any) {
       console.error('Error loading animals:', err);
-      toast.error('Failed to load animals');
+      toast.error(t('failedToLoadAnimals') || 'Failed to load animals');
     }
   };
 
@@ -192,7 +181,7 @@ export default function NewCase() {
                   <option value="">{t('selectAnimal')}</option>
                   {animals.map((animal) => (
                     <option key={animal.id} value={animal.id}>
-                      {animal.name} - {animal.type} {animal.age ? `(${animal.age} years)` : ''}
+                      {animal.name} - {animal.type} {animal.age ? `(${animal.age} ${t('years')})` : ''}
                     </option>
                   ))}
                 </select>
@@ -289,24 +278,14 @@ export default function NewCase() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('locationAnimal')} *
-                </label>
-                <LocationSelector 
-                  onLocationSelect={handleLocationSelect}
-                  selectedCellId={formData.cellId ? parseInt(formData.cellId) : undefined}
-                />
-              </div>
-
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm font-medium text-blue-900 mb-3">📸 {t('uploadMedia') || 'Upload Photos or Videos'}</p>
+                <p className="text-sm font-medium text-blue-900 mb-3">📸 {t('uploadPhotosVideos') || 'Upload Photos or Videos'}</p>
                 <p className="text-xs text-blue-800 mb-4">
-                  {t('mediaDescription') || 'Attach photos or videos of the animal to help with diagnosis. This will be added after case creation.'}
+                  {t('uploadMediaHelp') || 'Attach photos or videos of the animal to help with diagnosis. This will be added after case creation.'}
                 </p>
                 <div className="text-xs text-blue-700">
-                  <p>✓ Supported: Images (JPG, PNG, GIF, WebP) & Videos (MP4, MOV, AVI, WebM)</p>
-                  <p>✓ Max size: 100MB per file</p>
+                  <p>{t('supportedFormats') || '✓ Supported: Images (JPG, PNG, GIF, WebP) & Videos (MP4, MOV, AVI, WebM)'}</p>
+                  <p>{t('maxFileSize') || '✓ Max size: 100MB per file'}</p>
                 </div>
               </div>
 
@@ -334,25 +313,25 @@ export default function NewCase() {
           {step === 3 && (
             <div className="bg-white p-8 rounded-lg border border-gray-200 space-y-6">
               <h2 className="text-xl font-bold text-foreground">
-                {caseId ? '✅ Case Created Successfully!' : t('stepReview')}
+                {caseId ? (t('caseCreatedTitle') || '✅ Case Created Successfully!') : t('stepReview')}
               </h2>
 
               {caseId ? (
                 <>
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm font-medium text-green-900">Your case has been created!</p>
-                    <p className="text-sm text-green-800 mt-2">Case ID: CASE-{caseId}</p>
+                    <p className="text-sm font-medium text-green-900">{t('caseCreatedMessage') || 'Your case has been created!'}</p>
+                    <p className="text-sm text-green-800 mt-2">{t('caseIdLabel') || 'Case ID:'} CASE-{caseId}</p>
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">📸 Add Photos or Videos</h3>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">{t('addMediaTitle') || '📸 Add Photos or Videos'}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Now you can upload photos and videos related to this case to help with diagnosis.
+                      {t('addMediaSubtitle') || 'Now you can upload photos and videos related to this case to help with diagnosis.'}
                     </p>
                     <CaseMediaUpload
                       caseId={caseId}
                       onMediaUpload={(media) => {
-                        toast.success('Media uploaded successfully');
+                        toast.success(t('mediaUploadedSuccess') || 'Media uploaded successfully');
                       }}
                       onError={(error) => {
                         toast.error(error);
@@ -366,7 +345,7 @@ export default function NewCase() {
                       onClick={() => navigate('/farmer/cases')}
                       className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all"
                     >
-                      Go to My Cases
+                      {t('goToMyCases') || 'Go to My Cases'}
                     </button>
                   </div>
                 </>
@@ -421,7 +400,7 @@ export default function NewCase() {
                       disabled={isSubmitting}
                       className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? 'Creating...' : t('submitCase')}
+                      {isSubmitting ? (t('creating') || 'Creating...') : t('submitCase')}
                     </button>
                   </div>
                 </>

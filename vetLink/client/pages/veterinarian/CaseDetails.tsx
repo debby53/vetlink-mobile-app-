@@ -141,6 +141,7 @@ export default function VeterinarianCaseDetails() {
       await caseAPI.markCaseAsCompleted(Number(caseId), {
         diagnosis: diagnosis.trim(),
         treatment: treatment.trim(),
+        veterinarianId: user?.role === 'veterinarian' ? user.id : undefined
       } as any);
       toast.success('Case completed and farmer notified');
       setDiagnosis('');

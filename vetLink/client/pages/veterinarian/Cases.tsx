@@ -21,8 +21,6 @@ export default function VeterinarianCases() {
   const [escalatedCases, setEscalatedCases] = useState<CaseDTO[]>([]);
   const [showSectorCases, setShowSectorCases] = useState(false);
   const [showEscalatedCases, setShowEscalatedCases] = useState(false);
-  const [farmerMap, setFarmerMap] = useState<{ [key: number]: UserDTO }>({});
-  const [animalMap, setAnimalMap] = useState<{ [key: number]: AnimalDTO }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -41,57 +39,82 @@ export default function VeterinarianCases() {
 
   const loadCases = async () => {
     if (!user?.id) return;
-    
+
     setIsLoading(true);
     setError(null);
     try {
       // Load cases assigned to this veterinarian
       const casesData = await caseAPI.getCasesByVeterinarianId(user.id);
-      setCases(casesData);
 
       // Load cases in the same sector/location
+      let sectorCasesData: CaseDTO[] = [];
+      let escalatedCasesData: CaseDTO[] = [];
+      let filteredSectorCases: CaseDTO[] = [];
+
       try {
-        const sectorCasesData = await caseAPI.getCasesByVeterinarianLocation(user.id);
+        sectorCasesData = await caseAPI.getCasesByVeterinarianLocation(user.id);
         // Filter to only show escalated cases in escalated view
-        const escalatedCasesData = sectorCasesData.filter((c: CaseDTO) => c.isEscalated);
-        setEscalatedCases(escalatedCasesData);
-        
+        escalatedCasesData = sectorCasesData.filter((c: CaseDTO) => c.isEscalated);
         // For sector cases, exclude escalated ones (they'll be shown separately)
-        setSectorCases(sectorCasesData.filter((c: CaseDTO) => !c.isEscalated));
+        filteredSectorCases = sectorCasesData.filter((c: CaseDTO) => !c.isEscalated);
       } catch (err) {
         console.warn('Failed to load sector cases:', err);
-        setSectorCases([]);
-        setEscalatedCases([]);
       }
 
-      // Combine all lists for data loading
-      const allCases = [...casesData, ...sectorCases, ...escalatedCases];
 
-      // Load farmer and animal details
-      const farmers: { [key: number]: UserDTO } = {};
-      const animals: { [key: number]: AnimalDTO } = {};
+      // Fallback: Enrich cases with names if missing from backend
+      // This handles the case where backend hasn't been restarted to include new fields
+      const allCasesForEnrichment = [...casesData, ...filteredSectorCases, ...escalatedCasesData];
 
-      for (const caze of allCases) {
-        if (caze.farmerId && !farmers[caze.farmerId]) {
-          try {
-            const farmer = await userAPI.getUserById(caze.farmerId);
-            farmers[caze.farmerId] = farmer;
-          } catch (err) {
-            console.error(`Failed to load farmer ${caze.farmerId}:`, err);
-          }
+      // 1. Enrich Farmer Names
+      try {
+        const farmersList = await userAPI.getUsersByRole('farmer');
+        if (farmersList) {
+          const farmerMap = new Map(farmersList.map((f: any) => [f.id, f]));
+
+          // Enrich all cases
+          allCasesForEnrichment.forEach(c => {
+            if (!c.farmerName && c.farmerId && farmerMap.has(c.farmerId)) {
+              c.farmerName = farmerMap.get(c.farmerId).name;
+            }
+          });
         }
-        if (caze.animalId && !animals[caze.animalId]) {
-          try {
-            const animal = await animalAPI.getAnimalById(caze.animalId);
-            animals[caze.animalId] = animal;
-          } catch (err) {
-            console.error(`Failed to load animal ${caze.animalId}:`, err);
-          }
+      } catch (e) {
+        console.warn('Failed to enrich farmer names', e);
+      }
+
+      // 2. Enrich Animal Names (Fetch only missing)
+      const missingAnimalIds = new Set(
+        allCasesForEnrichment
+          .filter(c => !c.animalName && c.animalId)
+          .map(c => c.animalId)
+      );
+
+      if (missingAnimalIds.size > 0) {
+        try {
+          await Promise.all(Array.from(missingAnimalIds).map(async (id) => {
+            try {
+              const animal = await animalAPI.getAnimalById(id);
+              // Update all cases
+              allCasesForEnrichment.forEach(c => {
+                if (c.animalId === id && !c.animalName) {
+                  c.animalName = animal.name;
+                }
+              });
+            } catch (e) {
+              console.warn(`Failed to fetch animal ${id}`, e);
+            }
+          }));
+        } catch (e) {
+          console.warn('Error fetching missing animals', e);
         }
       }
 
-      setFarmerMap(farmers);
-      setAnimalMap(animals);
+      // Set state with enriched data
+      setCases(casesData);
+      setSectorCases(filteredSectorCases);
+      setEscalatedCases(escalatedCasesData);
+
     } catch (err: any) {
       console.error('Failed to load cases:', err);
       setError(err.message || 'Failed to load cases');
@@ -124,7 +147,7 @@ export default function VeterinarianCases() {
 
   const handleMarkAsReceived = async (caseId: number) => {
     try {
-      const updatedCase = await caseAPI.markCaseAsReceived(caseId);
+      const updatedCase = await caseAPI.markCaseAsReceived(caseId, user?.id);
       setCases(cases.map(c => c.id === caseId ? updatedCase : c));
       setSectorCases(sectorCases.map(c => c.id === caseId ? updatedCase : c));
       toast.success('Case marked as received');
@@ -140,7 +163,12 @@ export default function VeterinarianCases() {
     if (!treatment) return;
 
     try {
-      const updatedCase = await caseAPI.markCaseAsCompleted(caseId, { diagnosis, treatment });
+      const updatedCase = await caseAPI.markCaseAsCompleted(caseId, {
+        diagnosis,
+        treatment,
+        veterinarianId: user?.role === 'veterinarian' ? user.id : undefined,
+        cahwId: user?.role === 'cahw' ? user.id : undefined
+      });
       setCases(cases.map(c => c.id === caseId ? updatedCase : c));
       setSectorCases(sectorCases.map(c => c.id === caseId ? updatedCase : c));
       setEscalatedCases(escalatedCases.map(c => c.id === caseId ? updatedCase : c));
@@ -153,11 +181,9 @@ export default function VeterinarianCases() {
   const displayCases = showEscalatedCases ? escalatedCases : (showSectorCases ? sectorCases : cases);
 
   const filteredCases = displayCases.filter((c) => {
-    const farmer = farmerMap[c.farmerId];
-    const animal = animalMap[c.animalId];
     const matchesSearch =
-      (farmer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (animal?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.farmerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.animalName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.caseType.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || c.status?.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
@@ -176,18 +202,7 @@ export default function VeterinarianCases() {
 
         {/* View Options */}
         <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => {
-              setShowSectorCases(false);
-              setShowEscalatedCases(false);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${!showSectorCases && !showEscalatedCases
-              ? 'bg-primary text-white'
-              : 'bg-gray-200 text-foreground hover:bg-gray-300'
-              }`}
-          >
-            My Assigned Cases ({cases.length})
-          </button>
+          {/* 'My Assigned Cases' button removed as requested */}
           <button
             onClick={() => {
               setShowSectorCases(true);
@@ -290,13 +305,11 @@ export default function VeterinarianCases() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredCases.map((c) => {
-                    const farmer = farmerMap[c.farmerId];
-                    const animal = animalMap[c.animalId];
                     return (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 font-semibold text-foreground text-sm">#{c.id}</td>
-                        <td className="px-6 py-4 text-sm text-foreground">{farmer?.name || 'Unknown'}</td>
-                        <td className="px-6 py-4 text-sm text-foreground">{animal?.name || 'Unknown'}</td>
+                        <td className="px-6 py-4 text-sm text-foreground">{c.farmerName || 'Unknown'}</td>
+                        <td className="px-6 py-4 text-sm text-foreground">{c.animalName || 'Unknown'}</td>
                         <td className="px-6 py-4 text-sm text-foreground">{c.caseType}</td>
                         <td className="px-6 py-4 text-sm">
                           {c.status === 'OPEN' && (

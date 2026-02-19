@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vetLiink.Backend.dto.CaseDTO;
@@ -27,18 +28,29 @@ public class CaseController {
     private final CaseService caseService;
 
     @PostMapping
-    public ResponseEntity<CaseDTO> createCase(@RequestBody CaseDTO caseDTO) {
+    public ResponseEntity<?> createCase(@RequestBody CaseDTO caseDTO) {
         try {
             CaseDTO newCase = caseService.createCase(caseDTO);
             return ResponseEntity.status(201).body(newCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            e.printStackTrace();
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
         }
     }
 
     @GetMapping
     public ResponseEntity<List<CaseDTO>> getAllCases() {
         return ResponseEntity.ok(caseService.getAllCases());
+    }
+
+    @GetMapping("/stats/trends")
+    public ResponseEntity<List<Map<String, Object>>> getCaseTrends() {
+        return ResponseEntity.ok(caseService.getCaseTrends());
+    }
+
+    @GetMapping("/stats/types")
+    public ResponseEntity<List<Map<String, Object>>> getCaseTypeDistribution() {
+        return ResponseEntity.ok(caseService.getCaseTypeDistribution());
     }
 
     @GetMapping("/{id}")
@@ -144,9 +156,9 @@ public class CaseController {
     }
 
     @PutMapping("/{id}/mark-received")
-    public ResponseEntity<CaseDTO> markCaseAsReceived(@PathVariable Long id) {
+    public ResponseEntity<CaseDTO> markCaseAsReceived(@PathVariable Long id, @RequestParam(required = false) Long userId) {
         try {
-            CaseDTO updatedCase = caseService.markCaseAsReceived(id);
+            CaseDTO updatedCase = caseService.markCaseAsReceived(id, userId);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
             return ResponseEntity.status(400).body(null);

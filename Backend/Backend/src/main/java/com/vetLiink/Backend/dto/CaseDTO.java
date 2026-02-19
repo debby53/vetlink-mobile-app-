@@ -15,6 +15,9 @@ public class CaseDTO {
     private Long veterinarianId;
     private Long cahwId;
     private Long locationId;
+    private String farmerName;
+    private String animalName;
+    private String animalType;
     private String title;
     private String description;
     private String caseType;

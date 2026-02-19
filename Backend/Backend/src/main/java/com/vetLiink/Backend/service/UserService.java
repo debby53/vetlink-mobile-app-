@@ -133,6 +133,38 @@ public class UserService {
         return convertToDTO(user);
     }
 
+    // New method for users to update their own profile (non-admin fields only)
+    @Transactional
+    public UserDTO updateUserProfile(Long id, UserDTO request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Only allow updating safe fields (not role, status, etc.)
+        if (request.getName() != null) {
+            user.setName(request.getName());
+        }
+        
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+                throw new RuntimeException("Email already taken");
+            }
+            user.setEmail(request.getEmail());
+        }
+        
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+        
+        if (request.getLocationId() != null) {
+            Location location = locationRepository.findById(request.getLocationId())
+                    .orElseThrow(() -> new RuntimeException("Location not found"));
+            user.setLocation(location);
+        }
+
+        user = userRepository.save(user);
+        return convertToDTO(user);
+    }
+
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
@@ -162,6 +194,7 @@ public class UserService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole().toString())
+                .phoneNumber(user.getPhoneNumber())
                 .active(user.getActive())
                 .status(user.getStatus().toString())
                 .locationId(user.getLocation() != null ? user.getLocation().getId() : null)

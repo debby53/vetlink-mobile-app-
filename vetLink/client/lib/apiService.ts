@@ -23,7 +23,12 @@ export const getAuthHeader = () => ({
 export interface CaseDTO {
   id?: number;
   farmerId: number;
+  farmerName?: string;
   animalId: number;
+  animalName?: string;
+  animalType?: string; // e.g. "Cow", "Goat"
+  cahwId?: number;
+  veterinarianId?: number;
   title: string;
   description: string;
   caseType: string;
@@ -31,6 +36,10 @@ export interface CaseDTO {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
+  isEscalated?: boolean;
+  diagnosis?: string;
+  treatment?: string;
+  resolution?: string;
 }
 
 export interface AnimalDTO {
@@ -57,6 +66,7 @@ export interface HealthRecordDTO {
   weight?: number;
   temperature?: string;
   createdAt?: string;
+  recordDate?: string;
 }
 
 export interface MessageDTO {
@@ -278,6 +288,16 @@ export const userAPI = {
 
   updateUser: async (id: number, userData: Partial<UserDTO>): Promise<UserDTO> => {
     const response = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeader(),
+      body: JSON.stringify(userData),
+    });
+    return handleResponse(response);
+  },
+
+  // New method for users to update their own profile (non-admin)
+  updateOwnProfile: async (id: number, userData: Partial<UserDTO>): Promise<UserDTO> => {
+    const response = await fetch(`${API_BASE}/users/${id}/profile`, {
       method: 'PUT',
       headers: getAuthHeader(),
       body: JSON.stringify(userData),
@@ -508,8 +528,12 @@ export const caseAPI = {
     return handleResponse(response);
   },
 
-  markCaseAsReceived: async (caseId: number): Promise<CaseDTO> => {
-    const response = await fetch(`${API_BASE}/cases/${caseId}/mark-received`, {
+  markCaseAsReceived: async (caseId: number, userId?: number): Promise<CaseDTO> => {
+    let url = `${API_BASE}/cases/${caseId}/mark-received`;
+    if (userId) {
+      url += `?userId=${userId}`;
+    }
+    const response = await fetch(url, {
       method: 'PUT',
       headers: getAuthHeader(),
     });
@@ -563,6 +587,20 @@ export const caseAPI = {
   deleteCase: async (id: number): Promise<string> => {
     const response = await fetch(`${API_BASE}/cases/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(response);
+  },
+
+  getCaseTrends: async (): Promise<{ name: string; cases: number; resolved: number }[]> => {
+    const response = await fetch(`${API_BASE}/cases/stats/trends`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(response);
+  },
+
+  getCaseTypeDistribution: async (): Promise<{ name: string; value: number }[]> => {
+    const response = await fetch(`${API_BASE}/cases/stats/types`, {
       headers: getAuthHeader(),
     });
     return handleResponse(response);
