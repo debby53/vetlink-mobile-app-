@@ -11,4 +11,5 @@ public interface HealthRecordRepository extends JpaRepository<HealthRecord, Long
     List<HealthRecord> findByAnimalId(Long animalId);
     List<HealthRecord> findByAnimalIdOrderByRecordDateDesc(Long animalId);
     List<HealthRecord> findByRecordType(String recordType);
+    void deleteByAnimalId(Long animalId);
 }

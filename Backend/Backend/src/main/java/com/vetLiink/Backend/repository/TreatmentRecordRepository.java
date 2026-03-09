@@ -10,4 +10,6 @@ import java.util.List;
 public interface TreatmentRecordRepository extends JpaRepository<TreatmentRecord, Long> {
     List<TreatmentRecord> findByCahwId(Long cahwId);
     List<TreatmentRecord> findByAnimalId(Long animalId);
+    void deleteByCahwId(Long cahwId);
+    void deleteByAnimalId(Long animalId);
 }

@@ -23,6 +23,8 @@ export const getAuthHeader = () => ({
 export interface CaseDTO {
   id?: number;
   farmerId: number;
+  locationId?: number;
+  locationName?: string;
   farmerName?: string;
   animalId: number;
   animalName?: string;
@@ -36,6 +38,7 @@ export interface CaseDTO {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
+  resolvedAt?: string;
   isEscalated?: boolean;
   diagnosis?: string;
   treatment?: string;

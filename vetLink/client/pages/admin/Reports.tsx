@@ -52,7 +52,7 @@ type TimeRange = 'day' | 'week' | 'month' | 'year' | 'all';
 type ExportFormat = 'csv' | 'pdf' | 'excel';
 
 export default function Reports() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +83,49 @@ export default function Reports() {
     '#6EE7B7'        // Lighter
   ];
 
+  const getReportTitle = (reportType: string) => {
+    switch (reportType) {
+      case 'users':
+        return t('usersReportTitle');
+      case 'cases':
+        return t('casesReportTitle');
+      default:
+        return t('analyticsReportTitle');
+    }
+  };
+
+  const dateLocale = language === 'fr' ? 'fr-FR' : language === 'kinyarwanda' ? 'rw-RW' : 'en-US';
+
+  const getRoleLabel = (role?: string) => {
+    if (!role) return t('unknown');
+    const normalized = role.toLowerCase();
+    if (normalized === 'farmer') return t('farmers');
+    if (normalized === 'veterinarian') return t('veterinarians');
+    if (normalized === 'cahw') return t('cahws');
+    if (normalized === 'admin') return t('users');
+    return role;
+  };
+
+  const getStatusLabel = (status?: string) => {
+    if (!status) return t('na');
+    const normalized = status.toUpperCase();
+    const statusMap: Record<string, string> = {
+      OPEN: t('open'),
+      RECEIVED: t('received'),
+      PENDING: t('pending'),
+      IN_PROGRESS: t('inProgress'),
+      COMPLETED: t('completed'),
+      RESOLVED: t('resolved'),
+      CLOSED: t('closed'),
+      ACTIVE: t('active'),
+      INACTIVE: t('inactive'),
+      SUSPENDED: t('suspended'),
+      TRAINING_REQUIRED: t('trainingRequired'),
+      PENDING_VERIFICATION: t('pendingVerification'),
+    };
+    return statusMap[normalized] || status.replace(/_/g, ' ');
+  };
+
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -91,7 +134,6 @@ export default function Reports() {
     setIsLoading(true);
 
     try {
-      console.log('Fetching dashboard data...');
       // Use allSettled to allow partial data loading
       const results = await Promise.allSettled([
         userAPI.getActiveUsers(),
@@ -103,23 +145,18 @@ export default function Reports() {
       const [usersResult, casesResult, trendsResult, typesResult] = results;
 
       if (usersResult.status === 'fulfilled') {
-        console.log('Users loaded:', usersResult.value?.length);
         setUsers(usersResult.value || []);
       } else {
-        console.error('Failed to load users:', usersResult.reason);
-        toast.error('Failed to load user data');
+        toast.error(t('failedLoadUserData'));
       }
 
       if (casesResult.status === 'fulfilled') {
-        console.log('Cases loaded:', casesResult.value?.length);
         setCases(casesResult.value || []);
       } else {
-        console.error('Failed to load cases:', casesResult.reason);
-        toast.error('Failed to load case data');
+        toast.error(t('failedLoadCaseData'));
       }
 
       if (trendsResult.status === 'fulfilled') {
-        console.log('Trends loaded:', trendsResult.value?.length);
         setBackendCaseTrends(trendsResult.value || []);
       } else {
         console.error('Failed to load trends:', trendsResult.reason);
@@ -127,7 +164,6 @@ export default function Reports() {
       }
 
       if (typesResult.status === 'fulfilled') {
-        console.log('Types loaded:', typesResult.value?.length);
         setBackendCaseTypes(typesResult.value || []);
       } else {
         console.error('Failed to load types:', typesResult.reason);
@@ -265,7 +301,7 @@ export default function Reports() {
 
       if (dateFormat === 'month') {
         key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
-        label = current.toLocaleString('default', { month: 'short', year: '2-digit' });
+        label = current.toLocaleString(dateLocale, { month: 'short', year: '2-digit' });
       } else {
         key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
         // For daily, we might need to adjust rawMap key strategy slightly if we supported daily
@@ -274,16 +310,16 @@ export default function Reports() {
         // Fallback to month grain if using backend data which is monthly.
         if (backendCaseTrends.length > 0) {
           // If backend only gives months, force month view even for shorter ranges or accept smooth line
-          label = current.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+          label = current.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' });
           // We can't map daily from monthly backend data easily. 
           // Let's stick to monthly View for robust "Trends" over time unless specific daily data requested.
           // Revert logic: Always Monthly for now to align with backend "Trends"
           key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
-          label = current.toLocaleString('default', { month: 'short', year: '2-digit' });
+          label = current.toLocaleString(dateLocale, { month: 'short', year: '2-digit' });
         } else {
           // Client side can do daily? Let's stick to Monthly for consistency/simplicity of chart
           key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
-          label = current.toLocaleString('default', { month: 'short', year: '2-digit' });
+          label = current.toLocaleString(dateLocale, { month: 'short', year: '2-digit' });
         }
       }
 
@@ -308,23 +344,22 @@ export default function Reports() {
     // Remove duplicates if any (due to date math)
     return Array.from(new Set(result.map(r => r.name)))
       .map(name => result.find(r => r.name === name));
-  }, [backendCaseTrends, cases, timeRange]);
+  }, [backendCaseTrends, cases, timeRange, dateLocale]);
 
   // Chart Data: User Growth
   const userGrowthData = useMemo(() => {
     const monthlyData = new Map<string, { farmers: number, vets: number, cahws: number }>();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     for (let i = 3; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
-      const key = months[d.getMonth()];
+      const key = d.toLocaleString(dateLocale, { month: 'short' });
       monthlyData.set(key, { farmers: 0, vets: 0, cahws: 0 });
     }
 
     filteredData.users.forEach(u => {
       const d = new Date(u.createdAt || u.joinDate || 0);
-      const key = months[d.getMonth()];
+      const key = d.toLocaleString(dateLocale, { month: 'short' });
       if (monthlyData.has(key)) {
         const bucket = monthlyData.get(key)!;
         if (u.role === 'FARMER') bucket.farmers++;
@@ -334,7 +369,7 @@ export default function Reports() {
     });
 
     return Array.from(monthlyData.entries()).map(([name, val]) => ({ name, ...val }));
-  }, [filteredData.users]);
+  }, [filteredData.users, dateLocale]);
 
 
   // Chart Data: Case Types
@@ -343,14 +378,14 @@ export default function Reports() {
 
     if (backendCaseTypes.length > 0) {
       rawData = backendCaseTypes.map(item => ({
-        name: item.name || 'Unknown',
+        name: item.name || t('unknown'),
         value: item.value || 0
       }));
     } else {
       // Fallback
       const typeCounts: Record<string, number> = {};
       cases.forEach(c => {
-        const type = c.caseType || 'Other';
+        const type = c.caseType || t('other');
         typeCounts[type] = (typeCounts[type] || 0) + 1;
       });
       rawData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
@@ -360,19 +395,49 @@ export default function Reports() {
     return rawData
       .filter(item => item.value > 0)
       .sort((a, b) => b.value - a.value);
-  }, [backendCaseTypes, cases]);
+  }, [backendCaseTypes, cases, t]);
 
   // Custom Pie Label
   const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    if (percent >= 0.95) {
+      return (
+        <text x={cx} y={cy} fill="#064e3b" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={700}>
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
+      );
+    }
+
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     return percent > 0.05 ? (
-      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
+      <text x={x} y={y} fill="#022c22" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     ) : null;
+  };
+
+  const renderUserDistributionLabel = ({ cx, cy, midAngle, outerRadius, name, value }: any) => {
+    const radius = outerRadius + 22;
+    const rawX = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const isRightSide = rawX >= cx;
+    const x = isRightSide ? Math.min(rawX, cx + outerRadius + 28) : Math.max(rawX, cx - outerRadius - 28);
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="#065f46"
+        textAnchor={isRightSide ? 'start' : 'end'}
+        dominantBaseline="central"
+        fontSize={11}
+        fontWeight={600}
+      >
+        {`${name}: ${value}`}
+      </text>
+    );
   };
 
   // Custom Tooltip
@@ -396,40 +461,40 @@ export default function Reports() {
 
   // Chart Data: User Distribution (Total)
   const userDistributionData = useMemo(() => [
-    { name: 'Farmers', value: stats.farmers },
-    { name: 'Veterinarians', value: stats.veterinarians },
-    { name: 'CAHWs', value: stats.cahws },
-  ], [stats]);
+    { name: t('farmers'), value: stats.farmers },
+    { name: t('veterinarians'), value: stats.veterinarians },
+    { name: t('cahws'), value: stats.cahws },
+  ], [stats, t]);
 
   // Helper to get Farmer Name
   const getFarmerName = (farmerId: any) => {
     const farmer = users.find(u => u.id == farmerId); // Use loose quality to handle string/number mismatch
-    return farmer ? farmer.name : 'Unknown Farmer';
+    return farmer ? farmer.name : t('unknownFarmer');
   };
 
   // Helper to get CAHW Name
   const getCAHWName = (cahwId: any) => {
-    if (!cahwId) return 'N/A';
+    if (!cahwId) return t('na');
     const cahw = users.find(u => u.id == cahwId);
-    return cahw ? cahw.name : 'Unknown CAHW';
+    return cahw ? cahw.name : t('unknownCahw');
   };
 
   // Helper to get Veterinarian Name
   const getVeterinarianName = (vetId: any) => {
-    if (!vetId) return 'N/A';
+    if (!vetId) return t('na');
     const vet = users.find(u => u.id == vetId);
-    return vet ? vet.name : 'Unknown Vet';
+    return vet ? vet.name : t('unknownVet');
   };
 
   const formatDate = (dateString: any) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('na');
     try {
       // Handle Spring Boot default array format [year, month, day, hour, minute, second]
       if (Array.isArray(dateString) && dateString.length >= 3) {
         const [year, month, day] = dateString;
         // Month is 1-based in Java array, 0-based in JS
         const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString(dateLocale, {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
@@ -437,14 +502,14 @@ export default function Reports() {
       }
 
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      return date.toLocaleDateString('en-US', {
+      if (isNaN(date.getTime())) return t('invalidDate');
+      return date.toLocaleDateString(dateLocale, {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
     } catch (e) {
-      return 'Invalid Date';
+      return t('invalidDate');
     }
   };
 
@@ -458,17 +523,17 @@ export default function Reports() {
       switch (reportType) {
         case 'users':
           data = users; // Export ALL users
-          headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'Joined Date', 'Location'];
+          headers = ['ID', t('name'), t('email'), t('role'), t('status'), t('joined'), t('location')];
           fileName = `users_report_${new Date().toISOString().split('T')[0]}`;
           break;
         case 'cases':
           data = cases; // Export ALL cases
-          headers = ['ID', 'Case Title', 'Animal Type', 'Farmer Name', 'CAHW', 'Veterinarian', 'Status', 'Escalated', 'Severity', 'Created At'];
+          headers = ['ID', t('caseTitle'), t('animalType'), t('farmerName'), 'CAHW', t('veterinarian'), t('status'), t('escalated'), t('createdAtLabel')];
           fileName = `cases_report_${new Date().toISOString().split('T')[0]}`;
           break;
         case 'analytics':
           data = [stats];
-          headers = ['Total Users', 'Total Cases', 'Active Cases', 'Resolved Cases', 'Farmers', 'Veterinarians', 'CAHWs'];
+          headers = [t('totalUsersLabel'), t('totalCasesLabel'), t('activeCasesLabel'), t('resolvedCasesLabel'), t('farmers'), t('veterinarians'), t('cahws')];
           fileName = `analytics_report_${new Date().toISOString().split('T')[0]}`;
           break;
       }
@@ -481,10 +546,10 @@ export default function Reports() {
         exportToPDF(data, headers, fileName, reportType);
       }
 
-      toast.success(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated successfully`);
+      toast.success(`${getReportTitle(reportType)} ${t('generatedSuccessfully')}`);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to generate report');
+      toast.error(t('failedGenerateReport'));
     } finally {
       setIsGenerating(null);
     }
@@ -505,10 +570,10 @@ export default function Reports() {
       // Assuming 'COMPLETED' is the status for resolved cases
       await caseAPI.markCaseAsCompleted(selectedCase.id, {
         status: 'COMPLETED',
-        description: resolutionNotes ? `${selectedCase.description}\n\n[Resolution Note]: ${resolutionNotes}` : undefined
+        description: resolutionNotes ? `${selectedCase.description}\n\n[${t('resolutionNotes')}]: ${resolutionNotes}` : undefined
       });
 
-      toast.success(`Case #${selectedCase.id} resolved successfully`);
+      toast.success(`${t('caseLabel')} #${selectedCase.id} ${t('resolvedSuccessfully')}`);
 
       // Update local state without full reload
       setCases(prev => prev.map(c =>
@@ -518,7 +583,7 @@ export default function Reports() {
       setIsResolveDialogOpen(false);
     } catch (err) {
       console.error('Failed to resolve case:', err);
-      toast.error('Failed to resolve case');
+      toast.error(t('failedResolveCase'));
     } finally {
       setIsResolving(false);
     }
@@ -528,9 +593,9 @@ export default function Reports() {
     let csvContent = '';
 
     // Add Metadata Header
-    const title = `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`;
+    const title = getReportTitle(reportType);
     const date = new Date().toLocaleString();
-    const metadata = `Report Title:,${title}\nGenerated On:,"${date}"\n\n`;
+    const metadata = `${t('reportTitle')}:,${title}\n${t('generatedOn')}:,"${date}"\n\n`;
 
     if (reportType === 'users') {
       csvContent = metadata + [
@@ -539,10 +604,10 @@ export default function Reports() {
           u.id,
           `"${u.name}"`,
           u.email,
-          u.role,
-          u.status || (u.active ? 'ACTIVE' : 'INACTIVE'),
+          getRoleLabel(u.role),
+          getStatusLabel(u.status || (u.active ? 'ACTIVE' : 'INACTIVE')),
           formatDate(u.createdAt || u.joinDate),
-          `"${u.locationName || ''}"`
+          `"${u.locationName || t('na')}"`
         ].join(','))
       ].join('\n');
     } else if (reportType === 'cases') {
@@ -551,13 +616,12 @@ export default function Reports() {
         ...data.map((c: any) => [
           c.id,
           `"${c.title}"`,
-          `"${c.animalType || c.animalName || 'N/A'}"`,
+          `"${c.animalType || c.animalName || t('na')}"`,
           `"${getFarmerName(c.farmerId)}"`,
           `"${getCAHWName(c.cahwId)}"`,
           `"${getVeterinarianName(c.veterinarianId)}"`,
-          c.status,
-          c.isEscalated ? 'Yes' : 'No',
-          c.severity || 'N/A',
+          getStatusLabel(c.status),
+          c.isEscalated ? t('yes') : t('no'),
           formatDate(c.createdAt)
         ].join(','))
       ].join('\n');
@@ -573,13 +637,13 @@ export default function Reports() {
 
   const exportToExcel = (data: any[], headers: string[], fileName: string) => {
     // For a real implementation, use a library like xlsx
-    toast.info('Excel export feature coming soon. Using CSV format instead.');
+    toast.info(t('excelExportFallback'));
     exportToCSV(data, headers, fileName, 'users');
   };
 
   const exportToPDF = (data: any[], headers: string[], fileName: string, reportType: string) => {
     const doc = new jsPDF();
-    const title = `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`;
+    const title = getReportTitle(reportType);
     const date = new Date().toLocaleString();
 
     // Add Title
@@ -589,7 +653,7 @@ export default function Reports() {
     // Add Generation Date
     doc.setFontSize(11);
     doc.setTextColor(100);
-    doc.text(`Generated On: ${date}`, 14, 30);
+    doc.text(`${t('generatedOn')}: ${date}`, 14, 30);
 
     let tableRows: any[] = [];
 
@@ -599,21 +663,20 @@ export default function Reports() {
         u.name,
         u.email,
         u.role,
-        u.status || (u.active ? 'ACTIVE' : 'INACTIVE'),
-        formatDate(u.createdAt || u.joinDate) || 'N/A',
-        u.locationName || 'N/A'
+        getStatusLabel(u.status || (u.active ? 'ACTIVE' : 'INACTIVE')),
+        formatDate(u.createdAt || u.joinDate) || t('na'),
+        u.locationName || t('na')
       ]);
     } else if (reportType === 'cases') {
       tableRows = data.map((c: any) => [
         c.id,
         c.title,
-        c.animalType || c.animalName || 'N/A',
+        c.animalType || c.animalName || t('na'),
         getFarmerName(c.farmerId),
         getCAHWName(c.cahwId),
         getVeterinarianName(c.veterinarianId),
-        c.status,
-        c.isEscalated ? 'Yes' : 'No',
-        c.severity || 'N/A',
+        getStatusLabel(c.status),
+        c.isEscalated ? t('yes') : t('no'),
         formatDate(c.createdAt)
       ]);
     } else if (reportType === 'analytics') {
@@ -645,11 +708,11 @@ export default function Reports() {
   };
 
   const timeRanges: { value: TimeRange; label: string }[] = [
-    { value: 'day', label: 'Today' },
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' },
-    { value: 'year', label: 'This Year' },
-    { value: 'all', label: 'All Time' },
+    { value: 'day', label: t('today') },
+    { value: 'week', label: t('thisWeek') },
+    { value: 'month', label: t('thisMonth') },
+    { value: 'year', label: t('thisYear') },
+    { value: 'all', label: t('allTime') },
   ];
 
   const exportFormats: { value: ExportFormat; label: string; icon: any }[] = [
@@ -668,9 +731,9 @@ export default function Reports() {
               <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center">
                 <BarChart3 className="h-7 w-7 text-white" />
               </div>
-              {t('reports')} & Analytics
+              {t('reportsAndAnalytics')}
             </h1>
-            <p className="text-muted-foreground mt-2">Comprehensive system insights and data exports</p>
+            <p className="text-muted-foreground mt-2">{t('reportsSubtitle')}</p>
           </div>
           <button
             onClick={loadDashboardData}
@@ -678,7 +741,7 @@ export default function Reports() {
             className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-primary transition-all shadow-sm"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('refresh')}
           </button>
         </div>
 
@@ -687,7 +750,7 @@ export default function Reports() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-foreground">Time Range:</span>
+              <span className="font-semibold text-foreground">{t('timeRangeLabel')}</span>
             </div>
             <div className="flex gap-2 flex-wrap">
               {timeRanges.map((range) => (
@@ -714,7 +777,7 @@ export default function Reports() {
                 <Users className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">Total Users</p>
+            <p className="text-sm text-muted-foreground">{t('totalUsersLabel')}</p>
             <p className="text-3xl font-bold text-foreground mt-1">{stats.totalUsers}</p>
           </div>
 
@@ -724,7 +787,7 @@ export default function Reports() {
                 <Activity className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">Total Cases</p>
+            <p className="text-sm text-muted-foreground">{t('totalCasesLabel')}</p>
             <p className="text-3xl font-bold text-foreground mt-1">{stats.totalCases}</p>
           </div>
 
@@ -734,7 +797,7 @@ export default function Reports() {
                 <TrendingUp className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">Active Cases</p>
+            <p className="text-sm text-muted-foreground">{t('activeCasesLabel')}</p>
             <p className="text-3xl font-bold text-foreground mt-1">{stats.activeCases}</p>
           </div>
 
@@ -747,7 +810,7 @@ export default function Reports() {
                 {stats.totalCases > 0 ? Math.round((stats.resolvedCases / stats.totalCases) * 100) : 0}%
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">Resolved Rate</p>
+            <p className="text-sm text-muted-foreground">{t('resolvedRateLabel')}</p>
             <p className="text-3xl font-bold text-foreground mt-1">{stats.resolvedCases}</p>
           </div>
         </div>
@@ -758,7 +821,7 @@ export default function Reports() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Case Trends Over Time
+              {t('caseTrendsOverTime')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               {caseTrendData.length > 0 ? (
@@ -791,7 +854,7 @@ export default function Reports() {
                   <Area
                     type="monotone"
                     dataKey="cases"
-                    name="Total Cases"
+                    name={t('totalCasesLabel')}
                     stroke={PRIMARY_COLOR}
                     fillOpacity={1}
                     fill="url(#colorCases)"
@@ -800,7 +863,7 @@ export default function Reports() {
                   <Area
                     type="monotone"
                     dataKey="resolved"
-                    name="Resolved"
+                    name={t('resolved')}
                     stroke={PRIMARY_DARK}
                     fillOpacity={1}
                     fill="url(#colorResolved)"
@@ -811,7 +874,7 @@ export default function Reports() {
               ) : (
                 <div className="flex h-full items-center justify-center flex-col text-muted-foreground">
                   <TrendingUp className="h-10 w-10 mb-2 opacity-20" />
-                  <p>No enough data for trends</p>
+                  <p>{t('noTrendData')}</p>
                 </div>
               )}
             </ResponsiveContainer>
@@ -821,7 +884,7 @@ export default function Reports() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              User Growth by Role
+              {t('userGrowthByRole')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={userGrowthData}>
@@ -830,9 +893,9 @@ export default function Reports() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="farmers" fill={PRIMARY_COLOR} />
-                <Bar dataKey="vets" fill={PRIMARY_LIGHT} />
-                <Bar dataKey="cahws" fill={PRIMARY_DARK} />
+                <Bar dataKey="farmers" name={t('farmers')} fill={PRIMARY_COLOR} />
+                <Bar dataKey="vets" name={t('veterinarians')} fill={PRIMARY_LIGHT} />
+                <Bar dataKey="cahws" name={t('cahws')} fill={PRIMARY_DARK} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -841,7 +904,7 @@ export default function Reports() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
               <PieChart className="h-5 w-5 text-primary" />
-              Case Types Distribution
+              {t('caseTypesDistribution')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               {caseTypeData.length > 0 ? (
@@ -874,7 +937,7 @@ export default function Reports() {
               ) : (
                 <div className="flex h-full items-center justify-center flex-col text-muted-foreground">
                   <PieChart className="h-10 w-10 mb-2 opacity-20" />
-                  <p>No case data available</p>
+                  <p>{t('noCaseDataAvailable')}</p>
                 </div>
               )}
             </ResponsiveContainer>
@@ -884,7 +947,7 @@ export default function Reports() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              User Distribution
+              {t('userDistribution')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <RechartsPie>
@@ -893,7 +956,7 @@ export default function Reports() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
+                  label={renderUserDistributionLabel}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -913,7 +976,7 @@ export default function Reports() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
-              Detailed Reports
+              {t('detailedReports')}
             </h2>
 
             {/* Tabs */}
@@ -927,7 +990,7 @@ export default function Reports() {
                     : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
-                  {tab}
+                  {t(tab)}
                 </button>
               ))}
             </div>
@@ -937,7 +1000,7 @@ export default function Reports() {
           {activeTab === 'cases' && (
             <div className="mb-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-foreground">Filter by Status:</span>
+                <span className="text-sm font-medium text-foreground">{t('filterByStatus')}</span>
                 {['all', 'OPEN', 'RECEIVED', 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'RESOLVED', 'CLOSED'].map((status) => (
                   <button
                     key={status}
@@ -947,7 +1010,7 @@ export default function Reports() {
                       : 'bg-gray-100 text-foreground hover:bg-gray-200'
                       }`}
                   >
-                    {status === 'all' ? 'All' : status}
+                    {status === 'all' ? t('all') : getStatusLabel(status)}
                   </button>
                 ))}
               </div>
@@ -956,7 +1019,7 @@ export default function Reports() {
 
           {/* Toolbar & Export */}
           <div className="flex items-center justify-end gap-2 mb-4">
-            <span className="text-sm text-muted-foreground mr-2">Export Current View:</span>
+            <span className="text-sm text-muted-foreground mr-2">{t('exportCurrentView')}</span>
             {exportFormats.map((format) => {
               const Icon = format.icon;
               return (
@@ -981,12 +1044,12 @@ export default function Reports() {
                 <table className="w-full text-sm text-left">
                   <thead className="bg-gray-50 text-muted-foreground font-medium">
                     <tr>
-                      <th className="px-4 py-3">Name</th>
-                      <th className="px-4 py-3">Email</th>
-                      <th className="px-4 py-3">Role</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Location</th>
-                      <th className="px-4 py-3">Joined</th>
+                      <th className="px-4 py-3">{t('name')}</th>
+                      <th className="px-4 py-3">{t('email')}</th>
+                      <th className="px-4 py-3">{t('role')}</th>
+                      <th className="px-4 py-3">{t('status')}</th>
+                      <th className="px-4 py-3">{t('location')}</th>
+                      <th className="px-4 py-3">{t('joined')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -999,30 +1062,30 @@ export default function Reports() {
                           ${u.role === 'FARMER' ? 'bg-green-100 text-green-700' :
                               u.role === 'VETERINARIAN' ? 'bg-blue-100 text-blue-700' :
                                 'bg-purple-100 text-purple-700'}`}>
-                            {u.role}
+                            {getRoleLabel(u.role)}
                           </span>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                           ${(u.status === 'ACTIVE' || u.active) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {u.status || (u.active ? 'ACTIVE' : 'INACTIVE')}
+                            {getStatusLabel(u.status || (u.active ? 'ACTIVE' : 'INACTIVE'))}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{u.locationName || 'N/A'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{u.locationName || t('na')}</td>
                         <td className="px-4 py-3 text-muted-foreground">{formatDate(u.createdAt || u.joinDate)}</td>
                       </tr>
                     ))}
                     {users.length > 10 && (
                       <tr>
                         <td colSpan={6} className="px-4 py-3 text-center text-muted-foreground bg-gray-50">
-                          Showing 10 of {users.length} users. Export to see all.
+                          {t('showing')} 10 {t('of')} {users.length} {t('users')}. {t('exportToSeeAll')}
                         </td>
                       </tr>
                     )}
                     {users.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                          No users found.
+                          {t('noUsersFound')}
                         </td>
                       </tr>
                     )}
@@ -1039,15 +1102,14 @@ export default function Reports() {
                 <table className="w-full text-sm text-left">
                   <thead className="bg-gray-50 text-muted-foreground font-medium">
                     <tr>
-                      <th className="px-4 py-3">Case Title</th>
-                      <th className="px-4 py-3">Animal Type</th>
-                      <th className="px-4 py-3">Farmer</th>
+                      <th className="px-4 py-3">{t('caseTitle')}</th>
+                      <th className="px-4 py-3">{t('animalType')}</th>
+                      <th className="px-4 py-3">{t('farmer')}</th>
                       <th className="px-4 py-3">CAHW</th>
-                      <th className="px-4 py-3">Vet</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Escalated</th>
-                      <th className="px-4 py-3">Severity</th>
-                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">{t('vet')}</th>
+                      <th className="px-4 py-3">{t('status')}</th>
+                      <th className="px-4 py-3">{t('escalated')}</th>
+                      <th className="px-4 py-3">{t('date')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -1057,7 +1119,7 @@ export default function Reports() {
                       .map((c) => (
                         <tr key={c.id} className="hover:bg-gray-50/50">
                           <td className="px-4 py-3 font-medium text-foreground">{c.title}</td>
-                          <td className="px-4 py-3 text-muted-foreground capitalize">{c.animalType || c.animalName || 'N/A'}</td>
+                          <td className="px-4 py-3 text-muted-foreground capitalize">{c.animalType || c.animalName || t('na')}</td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {getFarmerName(c.farmerId) || c.farmerName}
                           </td>
@@ -1072,17 +1134,12 @@ export default function Reports() {
                                     ${c.status === 'COMPLETED' || c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'bg-green-100 text-green-700' :
                                 c.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
                                   'bg-blue-100 text-blue-700'}`}>
-                              {c.status}
+                              {getStatusLabel(c.status)}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-xs ${c.isEscalated ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
-                              {c.isEscalated ? 'Yes' : 'No'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${c.severity === 'HIGH' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
-                              {c.severity || 'N/A'}
+                              {c.isEscalated ? t('yes') : t('no')}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground text-xs">
@@ -1091,7 +1148,7 @@ export default function Reports() {
                         </tr>
                       ))}
                     {cases.length === 0 && (
-                      <tr><td colSpan={9} className="text-center py-8 text-muted-foreground">No cases found</td></tr>
+                      <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">{t('noCasesFound')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -1108,7 +1165,15 @@ export default function Reports() {
                   {Object.entries(stats).map(([key, value]) => (
                     <div key={key} className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                        {{
+                          totalUsers: t('totalUsersLabel'),
+                          totalCases: t('totalCasesLabel'),
+                          activeCases: t('activeCasesLabel'),
+                          resolvedCases: t('resolvedCasesLabel'),
+                          farmers: t('farmers'),
+                          veterinarians: t('veterinarians'),
+                          cahws: t('cahws'),
+                        }[key] || key.replace(/([A-Z])/g, ' $1').trim()}
                       </p>
                       <p className="text-2xl font-bold text-foreground">{String(value)}</p>
                     </div>
@@ -1124,27 +1189,27 @@ export default function Reports() {
       <Dialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Resolve Case #{selectedCase?.id}</DialogTitle>
+            <DialogTitle>{t('resolveCaseTitle')} #{selectedCase?.id}</DialogTitle>
             <DialogDescription>
-              Mark this case as completed. You can add an optional resolution note.
+              {t('resolveCaseDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">Resolution Notes</label>
+            <label className="text-sm font-medium mb-2 block">{t('resolutionNotes')}</label>
             <Textarea
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
-              placeholder="Describe how the case was resolved..."
+              placeholder={t('resolutionPlaceholder')}
               className="min-h-[100px]"
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsResolveDialogOpen(false)} disabled={isResolving}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={confirmResolve} disabled={isResolving} className='bg-primary text-white'>
               {isResolving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm Resolution
+              {t('confirmResolution')}
             </Button>
           </DialogFooter>
         </DialogContent>

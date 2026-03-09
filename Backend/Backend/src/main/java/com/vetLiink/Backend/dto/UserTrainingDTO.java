@@ -20,6 +20,8 @@ public class UserTrainingDTO {
     private String trainingCategory;
     private String trainingDuration;
     private Integer trainingLessons;
+    private Integer totalLessons;
+    private Integer completedLessons;
     private String instructorName;
     private String status;
     private Double progressPercentage;

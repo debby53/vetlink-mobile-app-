@@ -21,4 +21,6 @@ public interface MarketListingRepository extends JpaRepository<MarketListing, Lo
            "to_tsvector('english', title || ' ' || description) @@ plainto_tsquery('english', :query)", 
            nativeQuery = true)
     List<MarketListing> searchActiveListings(@Param("query") String query);
+
+    void deleteBySellerId(Long sellerId);
 }

@@ -39,11 +39,11 @@ export default function Training() {
         id: t.id,
         title: t.trainingTitle,
         category: t.trainingCategory,
-        progress: t.progressPercentage || 0,
+        progress: t.status === 'COMPLETED' ? 100 : t.progressPercentage || 0,
         completed: t.status === 'COMPLETED',
         duration: t.trainingDuration || '0 hours',
-        lessons: t.trainingLessons || 12,
-        completedLessons: Math.floor((t.progressPercentage || 0) / 100 * (t.trainingLessons || 12)),
+        lessons: t.totalLessons ?? t.trainingLessons ?? 0,
+        completedLessons: t.completedLessons ?? 0,
         instructor: t.instructorName,
         trainingId: t.trainingId,
         enrollmentId: t.id,
@@ -182,7 +182,7 @@ export default function Training() {
                       Lessons
                     </h4>
                     <div className="space-y-2">
-                      {Array.from({ length: Math.min(5, module.lessons) }).map(
+                      {Array.from({ length: Math.min(5, Math.max(module.lessons, 0)) }).map(
                         (_, i) => (
                           <div
                             key={i}

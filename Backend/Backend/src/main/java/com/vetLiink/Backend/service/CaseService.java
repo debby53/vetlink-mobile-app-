@@ -513,6 +513,7 @@ public class CaseService {
                 .veterinarianId(caze.getVeterinarian() != null ? caze.getVeterinarian().getId() : null)
                 .cahwId(caze.getCahw() != null ? caze.getCahw().getId() : null)
                 .locationId(caze.getLocation() != null ? caze.getLocation().getId() : null)
+                .locationName(caze.getLocation() != null ? caze.getLocation().getDisplayName() : null)
                 .title(caze.getTitle())
                 .description(caze.getDescription())
                 .caseType(caze.getCaseType())
@@ -560,4 +561,3 @@ public class CaseService {
                 .collect(Collectors.toList());
     }
 }
-

@@ -35,4 +35,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     @Query("SELECT u FROM User u WHERE u.role = 'VETERINARIAN' AND u.status = ?1 AND u.sector = ?2")
     Optional<User> findActiveSectorVeterinarian(UserStatus status, String sector);
+
+    List<User> findByAssignedVeterinarianId(Long assignedVeterinarianId);
+
+    List<User> findByApprovedById(Long approvedById);
 }

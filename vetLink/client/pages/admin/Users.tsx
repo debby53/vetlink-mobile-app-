@@ -9,6 +9,16 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import LocationSelector from '@/components/LocationSelector';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
@@ -41,6 +51,8 @@ export default function AdminUsers() {
   // View User State
   const [isViewUserModalOpen, setIsViewUserModalOpen] = useState(false);
   const [viewingUser, setViewingUser] = useState<any>(null);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   // Location state for the add/edit user form
   const [locationState, setLocationState] = useState<{
@@ -107,16 +119,29 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDeleteUser = async (userId: number) => {
-    if (window.confirm(t('confirmDeleteUser') || 'Are you sure you want to delete this user?')) {
-      try {
-        await userAPI.deleteUser(userId);
-        toast.success('User deleted successfully');
-        loadUsers();
-      } catch (err: any) {
-        console.error('Error deleting user:', err);
-        toast.error('Failed to delete user');
-      }
+  const handleDeleteUser = async (user: any) => {
+    if (user.status !== 'SUSPENDED') {
+      toast.error('Only suspended users can be permanently deleted');
+      return;
+    }
+
+    setUserToDelete(user);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setIsDeletingUser(true);
+      await userAPI.deleteUser(userToDelete.id);
+      toast.success('User deleted successfully');
+      setUserToDelete(null);
+      loadUsers();
+    } catch (err: any) {
+      console.error('Error deleting user:', err);
+      toast.error('Failed to delete user');
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -237,7 +262,11 @@ export default function AdminUsers() {
 
   // Helper to determine status Badge
   const getStatusBadge = (user: any) => {
-    // Prefer explicit backend status first (e.g., deleted users become SUSPENDED)
+    if (user.active === false) {
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">INACTIVE</span>;
+    }
+
+    // Prefer explicit backend status first
     const status = user.status || 'ACTIVE';
     let colorClass = 'bg-gray-100 text-gray-800';
 
@@ -245,9 +274,6 @@ export default function AdminUsers() {
     else if (status === 'SUSPENDED') colorClass = 'bg-red-100 text-red-800';
     else if (status === 'TRAINING_REQUIRED') colorClass = 'bg-blue-100 text-blue-800';
     else if (status === 'PENDING_VERIFICATION') colorClass = 'bg-yellow-100 text-yellow-800';
-    else if (user.active === false) {
-      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">INACTIVE</span>;
-    }
 
     return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colorClass}`}>
       {status.replace(/_/g, ' ')}
@@ -365,7 +391,7 @@ export default function AdminUsers() {
                           {user.active ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                         </button>
 
-                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 hover:bg-red-50 rounded-lg transition-all text-red-500" title={t('delete')}>
+                        <button onClick={() => handleDeleteUser(user)} className="p-2 hover:bg-red-50 rounded-lg transition-all text-red-500" title={t('delete')}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -475,6 +501,33 @@ export default function AdminUsers() {
             </div>
           </div>
         )}
+
+        <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Delete Suspended User
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <span className="block">
+                  You are about to permanently delete <span className="font-semibold text-foreground">{userToDelete?.name}</span>.
+                </span>
+                <span className="block">
+                  This action removes the user from the database and cannot be undone.
+                </span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingUser}>
+                {t('cancel') || 'Cancel'}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteUser} className="bg-red-600 hover:bg-red-700" disabled={isDeletingUser}>
+                {isDeletingUser ? 'Deleting...' : (t('delete') || 'Delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Edit User Modal */}
         {isEditUserModalOpen && editingUser && (

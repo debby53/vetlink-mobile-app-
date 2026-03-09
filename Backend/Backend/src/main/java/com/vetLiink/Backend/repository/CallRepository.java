@@ -39,4 +39,6 @@ public interface CallRepository extends JpaRepository<Call, Long> {
 
     // Find calls initiated after a certain time
     List<Call> findByInitiatedAtAfter(LocalDateTime time);
+
+    void deleteByCallerIdOrRecipientId(Long callerId, Long recipientId);
 }

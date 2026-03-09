@@ -25,6 +25,10 @@ export default function VeterinarianCases() {
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [caseToDelete, setCaseToDelete] = useState<number | null>(null);
+  const tr = (key: string, fallback: string) => {
+    const value = t(key);
+    return value && value !== key ? value : fallback;
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -193,11 +197,13 @@ export default function VeterinarianCases() {
     <SidebarLayout>
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground">{t('caseManagement')}</h1>
-            <p className="text-muted-foreground mt-1">{t('caseManagementSubtitle')}</p>
-          </div>
+        <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+            {tr('caseManagement', 'Case Management')}
+          </h1>
+          <p className="mt-2 text-sm md:text-base text-muted-foreground">
+            {tr('caseManagementSubtitle', 'Track and manage farmer cases in your care')}
+          </p>
         </div>
 
         {/* View Options */}
@@ -230,16 +236,16 @@ export default function VeterinarianCases() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-5 space-y-4">
           <div className="flex gap-4 flex-col md:flex-row">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type="text"
-                placeholder={t('searchPlaceholderCases')}
+                placeholder={tr('searchPlaceholderCases', 'Search by farmer, animal, or case type...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full h-11 pl-11 pr-4 border border-gray-300 rounded-xl bg-gray-50/50 text-sm focus:bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
               />
             </div>
           </div>
@@ -255,7 +261,7 @@ export default function VeterinarianCases() {
                   : 'bg-gray-100 text-foreground hover:bg-gray-200'
                   }`}
               >
-                {status === 'all' ? t('allCases') : status.toUpperCase()}
+                {status === 'all' ? tr('allCases', 'All Cases') : status.toUpperCase()}
               </button>
             ))}
           </div>

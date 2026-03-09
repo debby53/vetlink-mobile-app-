@@ -104,7 +104,7 @@ export default function Home() {
                   <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight">
                     <span className="block">{t('heroTitleLine1')}</span>
                     <span className="block">{t('heroTitleLine2')}</span>
-                    <span className="block text-secondary">{t('heroTitleLine3')}</span>
+                    
                   </h1>
                 </div>
 

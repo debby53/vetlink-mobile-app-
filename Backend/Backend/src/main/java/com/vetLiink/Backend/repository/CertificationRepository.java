@@ -11,4 +11,5 @@ public interface CertificationRepository extends JpaRepository<Certification, Lo
     List<Certification> findByUserId(Long userId);
     List<Certification> findByUserIdAndIsActive(Long userId, Boolean isActive);
     List<Certification> findByTitle(String title);
+    void deleteByUserId(Long userId);
 }

@@ -3,6 +3,7 @@ import SidebarLayout from "@/components/SidebarLayout";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { caseAPI, userAPI, animalAPI, certificationAPI } from "@/lib/apiService";
+import { formatDate } from "@/lib/dateUtils";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -144,7 +145,7 @@ export default function NearbyCases() {
             farmerId: caze.farmerId,
             farmer: farmer?.name || "Unknown",
             phone: farmer?.phone || "+254000000000",
-            animal: animal?.name || "Animal",
+            animal: caze.animalName || animal?.name || "Animal",
             issue: caze.title || caze.issue || "",
             distance: Math.round((Math.random() * 5 + 0.5) * 10) / 10 + " km",
             urgency:
@@ -156,10 +157,9 @@ export default function NearbyCases() {
                     ? "medium"
                     : "low",
             status: caze.status,
-            location: farmer?.location || "Unknown",
-            lastUpdated: caze.updatedAt
-              ? new Date(caze.updatedAt).toLocaleDateString()
-              : new Date(caze.createdAt).toLocaleDateString(),
+            isEscalated: Boolean(caze.isEscalated),
+            location: caze.locationName || "Location unavailable",
+            lastUpdated: formatDate(caze.updatedAt || caze.createdAt),
           };
         }),
       );

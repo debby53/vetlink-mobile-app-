@@ -13,4 +13,5 @@ public interface UserTrainingRepository extends JpaRepository<UserTraining, Long
     List<UserTraining> findByUserIdAndStatus(Long userId, UserTraining.EnrollmentStatus status);
     List<UserTraining> findByTrainingId(Long trainingId);
     Optional<UserTraining> findByUserIdAndTrainingId(Long userId, Long trainingId);
+    void deleteByUserId(Long userId);
 }

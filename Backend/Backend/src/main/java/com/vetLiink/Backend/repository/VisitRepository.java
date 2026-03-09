@@ -24,4 +24,8 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     List<Visit> findByFarmerIdAndStatus(Long farmerId, Visit.VisitStatus status);
     
     List<Visit> findByCaze(com.vetLiink.Backend.entity.Case caze);
+
+    void deleteByVeterinarianId(Long veterinarianId);
+
+    void deleteByFarmerId(Long farmerId);
 }

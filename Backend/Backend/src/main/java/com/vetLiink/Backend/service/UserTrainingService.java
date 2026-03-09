@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import com.vetLiink.Backend.dto.UserTrainingDTO;
 import com.vetLiink.Backend.entity.Training;
 import com.vetLiink.Backend.entity.User;
+import com.vetLiink.Backend.entity.UserLessonProgress;
 import com.vetLiink.Backend.entity.UserTraining;
+import com.vetLiink.Backend.repository.LessonRepository;
 import com.vetLiink.Backend.repository.TrainingRepository;
 import com.vetLiink.Backend.repository.UserRepository;
 import com.vetLiink.Backend.repository.UserTrainingRepository;
@@ -21,6 +23,7 @@ public class UserTrainingService {
     private final UserTrainingRepository userTrainingRepository;
     private final UserRepository userRepository;
     private final TrainingRepository trainingRepository;
+    private final LessonRepository lessonRepository;
 
     public UserTrainingDTO enrollUserInTraining(Long userId, Long trainingId) {
         User user = userRepository.findById(userId)
@@ -112,6 +115,16 @@ public class UserTrainingService {
     }
 
     private UserTrainingDTO convertToDTO(UserTraining userTraining) {
+        int totalLessons = lessonRepository
+                .findByTrainingIdOrderBySequenceOrderAsc(userTraining.getTraining().getId())
+                .size();
+        int completedLessons = (int) userTraining.getLessonProgress().stream()
+                .filter(UserLessonProgress::getCompleted)
+                .count();
+        double progressPercentage = userTraining.getStatus() == UserTraining.EnrollmentStatus.COMPLETED
+                ? 100.0
+                : (userTraining.getProgressPercentage() != null ? userTraining.getProgressPercentage() : 0.0);
+
         return UserTrainingDTO.builder()
                 .id(userTraining.getId())
                 .userId(userTraining.getUser().getId())
@@ -122,10 +135,12 @@ public class UserTrainingService {
                 .trainingTitle(userTraining.getTraining().getTitle())
                 .trainingCategory(userTraining.getTraining().getCategory())
                 .trainingDuration(userTraining.getTraining().getDuration())
-                .trainingLessons(userTraining.getTraining().getLessons())
+                .trainingLessons(totalLessons)
+                .totalLessons(totalLessons)
+                .completedLessons(completedLessons)
                 .instructorName(userTraining.getTraining().getInstructor().getName())
                 .status(userTraining.getStatus().toString())
-                .progressPercentage(userTraining.getProgressPercentage())
+                .progressPercentage(progressPercentage)
                 .score(userTraining.getScore())
                 .enrolledAt(userTraining.getEnrolledAt() != null ? userTraining.getEnrolledAt().toString() : null)
                 .completedAt(userTraining.getCompletedAt() != null ? userTraining.getCompletedAt().toString() : null)

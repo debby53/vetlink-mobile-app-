@@ -11,4 +11,6 @@ public interface TreatmentPlanRepository extends JpaRepository<TreatmentPlan, Lo
     List<TreatmentPlan> findByCazeId(Long caseId);
     List<TreatmentPlan> findByVeterinarianId(Long veterinarianId);
     List<TreatmentPlan> findByStatus(TreatmentPlan.TreatmentStatus status);
+    void deleteByCazeId(Long caseId);
+    void deleteByVeterinarianId(Long veterinarianId);
 }

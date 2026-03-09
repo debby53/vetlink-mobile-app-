@@ -2,12 +2,13 @@ package com.vetLiink.Backend.service;
 
 import com.vetLiink.Backend.dto.UserDTO;
 import com.vetLiink.Backend.dto.SignupRequest;
+import com.vetLiink.Backend.entity.Animal;
+import com.vetLiink.Backend.entity.Case;
 import com.vetLiink.Backend.entity.Location;
 import com.vetLiink.Backend.entity.User;
 import com.vetLiink.Backend.entity.UserStatus;
 import com.vetLiink.Backend.entity.Veterinarian;
-import com.vetLiink.Backend.repository.LocationRepository;
-import com.vetLiink.Backend.repository.UserRepository;
+import com.vetLiink.Backend.repository.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,19 @@ public class UserService {
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
-    private final com.vetLiink.Backend.repository.VeterinarianRepository veterinarianRepository;
+    private final VeterinarianRepository veterinarianRepository;
+    private final AnimalRepository animalRepository;
+    private final CaseRepository caseRepository;
+    private final VisitRepository visitRepository;
+    private final TreatmentPlanRepository treatmentPlanRepository;
+    private final TreatmentRecordRepository treatmentRecordRepository;
+    private final HealthRecordRepository healthRecordRepository;
+    private final MessageRepository messageRepository;
+    private final NotificationRepository notificationRepository;
+    private final UserTrainingRepository userTrainingRepository;
+    private final CertificationRepository certificationRepository;
+    private final CallRepository callRepository;
+    private final MarketListingRepository marketListingRepository;
 
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
@@ -169,23 +182,81 @@ public class UserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // If user is a veterinarian, we need to handle the license number uniqueness constraint
-        if (user.getRole() == User.UserRole.VETERINARIAN) {
-            java.util.Optional<Veterinarian> vetOpt = veterinarianRepository.findByUserId(user.getId());
-            if (vetOpt.isPresent()) {
-                Veterinarian vet = vetOpt.get();
-                // Obfuscate license number to allow reuse
-                vet.setLicenseNumber(vet.getLicenseNumber() + "_DELETED_" + System.currentTimeMillis());
-                veterinarianRepository.save(vet);
+
+        if (user.getStatus() != UserStatus.SUSPENDED) {
+            throw new RuntimeException("Only suspended users can be permanently deleted");
+        }
+
+        clearUserReferences(id);
+        deleteRoleSpecificData(user);
+
+        notificationRepository.deleteByUserId(id);
+        certificationRepository.deleteByUserId(id);
+        userTrainingRepository.deleteByUserId(id);
+        messageRepository.deleteBySenderIdOrRecipientId(id, id);
+        callRepository.deleteByCallerIdOrRecipientId(id, id);
+        marketListingRepository.deleteBySellerId(id);
+
+        veterinarianRepository.findByUserId(id).ifPresent(veterinarianRepository::delete);
+        userRepository.delete(user);
+    }
+
+    private void clearUserReferences(Long userId) {
+        List<User> assignedUsers = userRepository.findByAssignedVeterinarianId(userId);
+        assignedUsers.forEach(user -> user.setAssignedVeterinarian(null));
+        userRepository.saveAll(assignedUsers);
+
+        List<User> approvedUsers = userRepository.findByApprovedById(userId);
+        approvedUsers.forEach(user -> user.setApprovedBy(null));
+        userRepository.saveAll(approvedUsers);
+
+        List<Case> cahwCases = caseRepository.findByCahwId(userId);
+        cahwCases.forEach(caze -> caze.setCahw(null));
+        caseRepository.saveAll(cahwCases);
+
+        List<Case> veterinarianCases = caseRepository.findByVeterinarianId(userId);
+        veterinarianCases.forEach(caze -> caze.setVeterinarian(null));
+        caseRepository.saveAll(veterinarianCases);
+    }
+
+    private void deleteRoleSpecificData(User user) {
+        Long userId = user.getId();
+
+        switch (user.getRole()) {
+            case FARMER -> deleteFarmerData(userId);
+            case VETERINARIAN -> deleteVeterinarianData(userId);
+            case CAHW -> deleteCahwData(userId);
+            case ADMIN -> {
+                // No admin-owned domain records beyond shared references cleared above.
             }
         }
-        
-        // Soft delete: deactivate and obfuscate email to allow reuse
-        user.setActive(false);
-        user.setStatus(UserStatus.SUSPENDED);
-        user.setEmail(user.getEmail() + "_DELETED_" + System.currentTimeMillis());
-        userRepository.save(user);
+    }
+
+    private void deleteFarmerData(Long farmerId) {
+        visitRepository.deleteByFarmerId(farmerId);
+
+        List<Case> farmerCases = caseRepository.findByFarmerId(farmerId);
+        for (Case caze : farmerCases) {
+            treatmentPlanRepository.deleteByCazeId(caze.getId());
+        }
+        caseRepository.deleteAll(farmerCases);
+
+        List<Animal> animals = animalRepository.findByFarmerId(farmerId);
+        for (Animal animal : animals) {
+            healthRecordRepository.deleteByAnimalId(animal.getId());
+            treatmentRecordRepository.deleteByAnimalId(animal.getId());
+        }
+        animalRepository.deleteAll(animals);
+    }
+
+    private void deleteVeterinarianData(Long veterinarianId) {
+        treatmentPlanRepository.deleteByVeterinarianId(veterinarianId);
+        visitRepository.deleteByVeterinarianId(veterinarianId);
+        veterinarianRepository.findByUserId(veterinarianId).ifPresent(veterinarianRepository::delete);
+    }
+
+    private void deleteCahwData(Long cahwId) {
+        treatmentRecordRepository.deleteByCahwId(cahwId);
     }
 
     private UserDTO convertToDTO(User user) {
