@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-const API_BASE = 'http://localhost:8888/api';
+import { API_BASE } from './apiConfig';
 
 export interface User {
   id: number;
@@ -24,6 +23,22 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+async function readErrorMessage(response: Response, fallback: string) {
+  const contentType = response.headers.get('content-type') || '';
+
+  try {
+    if (contentType.includes('application/json')) {
+      const errorJson = await response.json();
+      return errorJson.message || fallback;
+    }
+
+    const errorText = await response.text();
+    return errorText || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -54,17 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        // Log status for debugging
         console.log('Login failed with status:', response.status);
-
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-          const errorJson = await response.json();
-          throw new Error(errorJson.message || 'Login failed');
-        } else {
-          const errorText = await response.text();
-          throw new Error(errorText || 'Login failed');
-        }
+        throw new Error(await readErrorMessage(response, 'Login failed'));
       }
 
       const data = await response.json();
@@ -96,8 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to send OTP');
+        throw new Error(await readErrorMessage(response, 'Failed to send OTP'));
       }
     } catch (error) {
       console.error('OTP Send error:', error);
@@ -114,8 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'OTP Verification failed');
+        throw new Error(await readErrorMessage(response, 'OTP Verification failed'));
       }
 
       const data = await response.json();
@@ -165,8 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Signup failed');
+        throw new Error(await readErrorMessage(response, 'Signup failed'));
       }
 
       const data = await response.json();

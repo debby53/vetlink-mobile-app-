@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.vetLiink.Backend.dto.UserTrainingDTO;
 import com.vetLiink.Backend.entity.Training;
@@ -47,12 +48,14 @@ public class UserTrainingService {
         return convertToDTO(savedUserTraining);
     }
 
+    @Transactional(readOnly = true)
     public List<UserTrainingDTO> getUserTrainings(Long userId) {
         return userTrainingRepository.findByUserId(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<UserTrainingDTO> getUserTrainingsByStatus(Long userId, String status) {
         return userTrainingRepository.findByUserIdAndStatus(userId, UserTraining.EnrollmentStatus.valueOf(status)).stream()
                 .map(this::convertToDTO)
@@ -88,6 +91,7 @@ public class UserTrainingService {
         return convertToDTO(updatedUserTraining);
     }
 
+    @Transactional(readOnly = true)
     public UserTrainingDTO getEnrollmentById(Long id) {
         UserTraining userTraining = userTrainingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
@@ -108,6 +112,7 @@ public class UserTrainingService {
         return convertToDTO(resetUserTraining);
     }
 
+    @Transactional(readOnly = true)
     public List<UserTrainingDTO> getTrainingEnrollments(Long trainingId) {
         return userTrainingRepository.findByTrainingId(trainingId).stream()
                 .map(this::convertToDTO)
@@ -115,15 +120,35 @@ public class UserTrainingService {
     }
 
     private UserTrainingDTO convertToDTO(UserTraining userTraining) {
-        int totalLessons = lessonRepository
-                .findByTrainingIdOrderBySequenceOrderAsc(userTraining.getTraining().getId())
-                .size();
-        int completedLessons = (int) userTraining.getLessonProgress().stream()
-                .filter(UserLessonProgress::getCompleted)
-                .count();
+        Training training = userTraining.getTraining();
+        Long trainingId = training != null ? training.getId() : null;
+
+        int totalLessons = 0;
+        if (trainingId != null) {
+            totalLessons = lessonRepository
+                    .findByTrainingIdOrderBySequenceOrderAsc(trainingId)
+                    .size();
+        }
+
+        int completedLessons = 0;
+        if (userTraining.getLessonProgress() != null) {
+            completedLessons = (int) userTraining.getLessonProgress().stream()
+                    .filter(progress -> Boolean.TRUE.equals(progress.getCompleted()))
+                    .count();
+        }
+
         double progressPercentage = userTraining.getStatus() == UserTraining.EnrollmentStatus.COMPLETED
                 ? 100.0
                 : (userTraining.getProgressPercentage() != null ? userTraining.getProgressPercentage() : 0.0);
+
+        String instructorName = null;
+        try {
+            if (training != null && training.getInstructor() != null) {
+                instructorName = training.getInstructor().getName();
+            }
+        } catch (Exception e) {
+            System.err.println("Could not load training instructor: " + e.getMessage());
+        }
 
         return UserTrainingDTO.builder()
                 .id(userTraining.getId())
@@ -131,20 +156,20 @@ public class UserTrainingService {
                 .userName(userTraining.getUser().getName())
                 .userEmail(userTraining.getUser().getEmail())
                 .userRole(userTraining.getUser().getRole() != null ? userTraining.getUser().getRole().toString() : null)
-                .trainingId(userTraining.getTraining().getId())
-                .trainingTitle(userTraining.getTraining().getTitle())
-                .trainingCategory(userTraining.getTraining().getCategory())
-                .trainingDuration(userTraining.getTraining().getDuration())
+                .trainingId(trainingId)
+                .trainingTitle(training != null ? training.getTitle() : null)
+                .trainingCategory(training != null ? training.getCategory() : null)
+                .trainingDuration(training != null ? training.getDuration() : null)
                 .trainingLessons(totalLessons)
                 .totalLessons(totalLessons)
                 .completedLessons(completedLessons)
-                .instructorName(userTraining.getTraining().getInstructor().getName())
+                .instructorName(instructorName)
                 .status(userTraining.getStatus().toString())
                 .progressPercentage(progressPercentage)
                 .score(userTraining.getScore())
                 .enrolledAt(userTraining.getEnrolledAt() != null ? userTraining.getEnrolledAt().toString() : null)
                 .completedAt(userTraining.getCompletedAt() != null ? userTraining.getCompletedAt().toString() : null)
-                .videoUrl(userTraining.getTraining().getVideoUrl())
+                .videoUrl(training != null ? training.getVideoUrl() : null)
                 .build();
     }
 }

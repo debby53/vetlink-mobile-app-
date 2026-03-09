@@ -3,6 +3,8 @@
  * Handles peer connections, media streams, and call signaling
  */
 
+import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
+import { API_ORIGIN } from './apiConfig';
 import { RingtoneManager } from './RingtoneManager';
 
 export interface SignalingMessage {
@@ -24,7 +26,8 @@ export class CallManager {
   private peerConnection: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
-  private signalingConnection: WebSocket | null = null;
+  private signalingClient: Client | null = null;
+  private signalingSubscriptions: StompSubscription[] = [];
   private userId: number;
   private callId: number | null = null;
   private remoteUserId: number | null = null;
@@ -38,10 +41,15 @@ export class CallManager {
   private iceCandidateQueue: RTCIceCandidate[] = [];
   private isConnecting: boolean = false;
   private ringtoneManager: RingtoneManager;
+  private signalingReadyPromise: Promise<void>;
+  private resolveSignalingReady: (() => void) | null = null;
 
   constructor(userId: number) {
     this.userId = userId;
     this.ringtoneManager = new RingtoneManager();
+    this.signalingReadyPromise = new Promise((resolve) => {
+      this.resolveSignalingReady = resolve;
+    });
     this.setupSignalingConnection();
   }
 
@@ -49,36 +57,75 @@ export class CallManager {
    * Setup WebSocket connection for signaling
    */
   private setupSignalingConnection() {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/call`;
+    const wsProtocol = API_ORIGIN.startsWith('https://') ? 'wss://' : 'ws://';
+    const wsHost = API_ORIGIN.replace(/^https?:\/\//, '');
+    const wsUrl = `${wsProtocol}${wsHost}/ws-call`;
 
-    console.log('🔌 Connecting to signaling server:', wsUrl);
+    console.log('Connecting to signaling server:', wsUrl);
 
-    this.signalingConnection = new WebSocket(wsUrl);
+    this.signalingClient = new Client({
+      brokerURL: wsUrl,
+      reconnectDelay: 5000,
+      debug: () => {},
+      onConnect: () => {
+        console.log('WebSocket connected');
+        this.subscribeToUserQueue();
+        this.resolveSignalingReady?.();
+        this.resolveSignalingReady = null;
+        this.startPingKeepalive();
+      },
+      onStompError: (frame) => {
+        console.error('STOMP error:', frame.headers['message'], frame.body);
+        this.onError?.('Connection error');
+      },
+      onWebSocketError: (error) => {
+        console.error('WebSocket error:', error);
+        this.onError?.('Connection error');
+      },
+      onWebSocketClose: () => {
+        console.log('WebSocket disconnected');
+        if (this.pingInterval) clearInterval(this.pingInterval);
+        this.signalingSubscriptions = [];
+      },
+    });
 
-    this.signalingConnection.onopen = () => {
-      console.log('✅ WebSocket connected');
-      this.startPingKeepalive();
-    };
+    this.signalingClient.activate();
+  }
 
-    this.signalingConnection.onmessage = (event) => {
-      try {
-        const message: SignalingMessage = JSON.parse(event.data);
-        this.handleSignalingMessage(message);
-      } catch (err) {
-        console.error('❌ Error parsing signaling message:', err);
-      }
-    };
+  private subscribeToUserQueue() {
+    if (!this.signalingClient?.connected) return;
 
-    this.signalingConnection.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-      this.onError?.('Connection error');
-    };
+    this.signalingSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.signalingSubscriptions = [
+      this.signalingClient.subscribe(`/queue/user/${this.userId}/offer`, (message) => this.handleIncomingMessage(message)),
+      this.signalingClient.subscribe(`/queue/user/${this.userId}/answer`, (message) => this.handleIncomingMessage(message)),
+      this.signalingClient.subscribe(`/queue/user/${this.userId}/ice-candidate`, (message) => this.handleIncomingMessage(message)),
+      this.signalingClient.subscribe(`/queue/user/${this.userId}/call-rejected`, (message) => this.handleIncomingMessage(message)),
+      this.signalingClient.subscribe(`/queue/user/${this.userId}/call-ended`, (message) => this.handleIncomingMessage(message)),
+      this.signalingClient.subscribe(`/queue/user/${this.userId}/pong`, (message) => this.handleIncomingMessage(message)),
+    ];
+  }
 
-    this.signalingConnection.onclose = () => {
-      console.log('❌ WebSocket disconnected');
-      if (this.pingInterval) clearInterval(this.pingInterval);
-    };
+  private handleIncomingMessage(frame: IMessage) {
+    try {
+      const message: SignalingMessage = JSON.parse(frame.body);
+      this.handleSignalingMessage(message);
+    } catch (err) {
+      console.error('Error parsing signaling message:', err);
+    }
+  }
+
+  private async waitForSignalingConnection() {
+    if (this.signalingClient?.connected) {
+      return;
+    }
+
+    await Promise.race([
+      this.signalingReadyPromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Signaling server unavailable')), 5000),
+      ),
+    ]);
   }
 
   /**
@@ -86,8 +133,8 @@ export class CallManager {
    */
   private startPingKeepalive() {
     this.pingInterval = setInterval(() => {
-      if (this.signalingConnection?.readyState === WebSocket.OPEN) {
-        this.send({
+      if (this.signalingClient?.connected) {
+        void this.send({
           type: 'ping',
           fromUserId: this.userId,
           toUserId: 0,
@@ -100,12 +147,28 @@ export class CallManager {
   /**
    * Send signaling message
    */
-  private send(message: SignalingMessage) {
-    if (this.signalingConnection?.readyState === WebSocket.OPEN) {
-      this.signalingConnection.send(JSON.stringify(message));
-    } else {
-      console.warn('⚠️ WebSocket not open, cannot send message');
+  private async send(message: SignalingMessage) {
+    await this.waitForSignalingConnection();
+
+    const destinations: Record<SignalingMessage['type'], string> = {
+      offer: '/app/call/offer',
+      answer: '/app/call/answer',
+      'ice-candidate': '/app/call/ice-candidate',
+      'call-rejected': '/app/call/reject',
+      'call-ended': '/app/call/end',
+      ping: '/app/call/ping',
+      pong: '/app/call/ping',
+    };
+
+    const destination = destinations[message.type];
+    if (!destination || !this.signalingClient?.connected) {
+      throw new Error('WebSocket not open, cannot send message');
     }
+
+    this.signalingClient.publish({
+      destination,
+      body: JSON.stringify(message),
+    });
   }
 
   /**
@@ -171,7 +234,7 @@ export class CallManager {
 
       await this.peerConnection!.setLocalDescription(offer);
 
-      this.send({
+      await this.send({
         type: 'offer',
         fromUserId: this.userId,
         toUserId: recipientId,
@@ -233,7 +296,7 @@ export class CallManager {
         const answer = await this.peerConnection!.createAnswer();
         await this.peerConnection!.setLocalDescription(answer);
 
-        this.send({
+        await this.send({
           type: 'answer',
           fromUserId: this.userId,
           toUserId: callerId,
@@ -262,7 +325,7 @@ export class CallManager {
     // Stop ringtone when rejecting
     this.ringtoneManager.stop();
 
-    this.send({
+    void this.send({
       type: 'call-rejected',
       fromUserId: this.userId,
       toUserId: callerId,
@@ -279,7 +342,7 @@ export class CallManager {
     this.ringtoneManager.stop();
 
     if (this.remoteUserId && this.callId) {
-      this.send({
+      await this.send({
         type: 'call-ended',
         fromUserId: this.userId,
         toUserId: this.remoteUserId,
@@ -332,7 +395,7 @@ export class CallManager {
     // Handle ICE candidates
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate && this.remoteUserId && this.callId) {
-        this.send({
+        void this.send({
           type: 'ice-candidate',
           fromUserId: this.userId,
           toUserId: this.remoteUserId,
@@ -604,9 +667,11 @@ export class CallManager {
     this.cleanup();
     this.ringtoneManager.destroy();
     if (this.pingInterval) clearInterval(this.pingInterval);
-    if (this.signalingConnection) {
-      this.signalingConnection.close();
-      this.signalingConnection = null;
+    this.signalingSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.signalingSubscriptions = [];
+    if (this.signalingClient) {
+      void this.signalingClient.deactivate();
+      this.signalingClient = null;
     }
   }
 

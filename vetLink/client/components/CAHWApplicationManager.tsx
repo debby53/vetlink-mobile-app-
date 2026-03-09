@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
+import { API_BASE } from '@/lib/apiConfig';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,7 +37,7 @@ export default function CAHWApplicationManager() {
   const fetchPendingCAHWs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/cahw-applications/pending', {
+      const response = await fetch(`${API_BASE}/cahw-applications/pending`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -58,7 +59,7 @@ export default function CAHWApplicationManager() {
 
   const handleApprove = async (cahwId: number) => {
     try {
-      const response = await fetch(`/api/cahw-applications/${cahwId}/approve`, {
+      const response = await fetch(`${API_BASE}/cahw-applications/${cahwId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +88,7 @@ export default function CAHWApplicationManager() {
     }
 
     try {
-      const response = await fetch(`/api/cahw-applications/${cahwId}/reject`, {
+      const response = await fetch(`${API_BASE}/cahw-applications/${cahwId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

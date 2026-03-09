@@ -14,6 +14,7 @@ import Farmers from "./pages/Farmers";
 import Veterinarians from "./pages/Veterinarians";
 import CAHWs from "./pages/CAHWs";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
@@ -98,6 +99,7 @@ export default function App() {
                   <Route path="/veterinarians" element={<Veterinarians />} />
                   <Route path="/cahws" element={<CAHWs />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/signup" element={<Signup />} />
 
                   {/* Protected Dashboard Routes */}

@@ -36,11 +36,13 @@ public class UserService {
     private final CallRepository callRepository;
     private final MarketListingRepository marketListingRepository;
 
+    @Transactional(readOnly = true)
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         return convertToDTO(user);
     }
 
+    @Transactional(readOnly = true)
     public UserDTO getUserByEmail(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         return convertToDTO(user);
@@ -259,6 +261,17 @@ public class UserService {
         treatmentRecordRepository.deleteByCahwId(cahwId);
     }
 
+    private String resolveLocationName(User user) {
+        try {
+            if (user.getLocation() != null) {
+                return user.getLocation().getDisplayName();
+            }
+        } catch (Exception e) {
+            System.err.println("Could not load user location name: " + e.getMessage());
+        }
+        return null;
+    }
+
     private UserDTO convertToDTO(User user) {
         return UserDTO.builder()
                 .id(user.getId())
@@ -269,7 +282,7 @@ public class UserService {
                 .active(user.getActive())
                 .status(user.getStatus().toString())
                 .locationId(user.getLocation() != null ? user.getLocation().getId() : null)
-                .locationName(user.getLocation() != null ? user.getLocation().getDisplayName() : null)
+                .locationName(resolveLocationName(user))
                 .createdAt(user.getCreatedAt())
                 .build();
     }

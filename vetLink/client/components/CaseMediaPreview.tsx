@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Trash2, Download, Eye, EyeOff, Calendar, User, HardDrive } from 'lucide-react';
 import { caseAPI } from '../lib/apiService';
 import { useAuth } from '../lib/AuthContext';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8888/api';
+import { API_BASE, API_ORIGIN } from '../lib/apiConfig';
 
 // Helper function to construct full media URL
 const getMediaUrl = (fileUrl: string): string => {
@@ -16,8 +15,7 @@ const getMediaUrl = (fileUrl: string): string => {
   
   // If it's already an API path like /api/case-media/..., prepend only the base (protocol + host)
   if (fileUrl.startsWith('/api/case-media/')) {
-    const apiBaseWithoutPath = 'http://localhost:8888';
-    return `${apiBaseWithoutPath}${fileUrl}`;
+    return `${API_ORIGIN}${fileUrl}`;
   }
   
   // If it's an old-style file path like uploads/case-2/filename, convert it

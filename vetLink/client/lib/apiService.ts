@@ -3,7 +3,7 @@
  * Handles all API calls to the backend
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8888/api';
+import { API_BASE } from './apiConfig';
 
 // Log the API base URL for debugging
 console.log('🌐 API Base URL:', API_BASE);
@@ -189,6 +189,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
       console.error('❌ API Error Text:', text);
       throw new Error(text || `HTTP Error: ${response.status}`);
     } catch (parseErr) {
+      if (parseErr instanceof Error && parseErr.message) {
+        throw parseErr;
+      }
       console.error('❌ Error parsing error response:', parseErr);
       throw new Error(`HTTP Error: ${response.status}`);
     }
@@ -252,6 +255,24 @@ export const authAPI = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password, role, locationId }),
+    });
+    return handleResponse(response);
+  },
+
+  forgotPassword: async (email: string): Promise<{ message: string; resetToken?: string }> => {
+    const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  resetPassword: async (email: string, token: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token, newPassword }),
     });
     return handleResponse(response);
   },

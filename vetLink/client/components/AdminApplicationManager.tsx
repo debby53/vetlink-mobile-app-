@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { API_BASE } from '@/lib/apiConfig';
 
 interface Application {
   id: number;
@@ -30,12 +31,12 @@ const AdminApplicationManager: React.FC = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('vetlink_token');
       if (!token) {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/admin/applications/status/${selectedStatus}`, {
+      const response = await fetch(`${API_BASE}/admin/applications/status/${selectedStatus}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -58,9 +59,9 @@ const AdminApplicationManager: React.FC = () => {
   const approveApplication = async (userId: number) => {
     try {
       setActionInProgress(userId);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('vetlink_token');
 
-      const response = await fetch('/api/admin/applications/approve', {
+      const response = await fetch(`${API_BASE}/admin/applications/approve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -90,9 +91,9 @@ const AdminApplicationManager: React.FC = () => {
 
     try {
       setActionInProgress(userId);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('vetlink_token');
 
-      const response = await fetch('/api/admin/applications/reject', {
+      const response = await fetch(`${API_BASE}/admin/applications/reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

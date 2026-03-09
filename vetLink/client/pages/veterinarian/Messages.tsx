@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SidebarLayout from '@/components/SidebarLayout';
 import CallModal from '@/components/CallModal';
 import { Send, Search, MessageSquare, X, Trash2, Edit2, Check, Phone, Video } from 'lucide-react';
@@ -26,6 +26,7 @@ export default function Messages() {
   const [allUsers, setAllUsers] = useState<UserDTO[]>([]);
   const [showUserSelector, setShowUserSelector] = useState(false);
   const [searchUsers, setSearchUsers] = useState('');
+  const [selectedChatUser, setSelectedChatUser] = useState<UserDTO | null>(null);
   const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -34,6 +35,7 @@ export default function Messages() {
   const [showCallModal, setShowCallModal] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<any[]>([]);
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const callCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const parseDate = (dateValue: any): Date => {
     if (Array.isArray(dateValue)) {
@@ -114,8 +116,11 @@ export default function Messages() {
   };
 
   useEffect(() => {
+    if (!user?.id) return;
+
+    let isMounted = true;
+
     const loadInbox = async () => {
-      if (!user?.id) return;
       try {
         const inbox = await messageAPI.getInboxMessages(user.id);
         // Build conversation list (one entry per partner)
@@ -150,32 +155,43 @@ export default function Messages() {
             convs.push({ partnerId, name: 'Unknown', type: 'User', avatar: '👤', ...info });
           }
         }
+        if (!isMounted) return;
+
         setConversations(convs);
         if (convs.length > 0 && selectedChat === null) setSelectedChat(convs[0].partnerId as number);
 
-        // Load all users for new message selection
+        // Load all active users for new message selection
         try {
-          const allUsersData = await userAPI.getUsersByRole('farmer');
-          setAllUsers(allUsersData || []);
+          const allUsersData = await userAPI.getActiveUsers();
+          if (isMounted) {
+            setAllUsers(allUsersData || []);
+          }
         } catch (err) {
           console.error('Failed to load users:', err);
         }
-
-        // Check for incoming calls
-        checkIncomingCalls();
-
-        // Check for incoming calls every 2 seconds
-        const callCheckInterval = setInterval(() => {
-          checkIncomingCalls();
-        }, 2000);
-
-        return () => clearInterval(callCheckInterval);
       } catch (err) {
         console.error('Failed to load inbox', err);
         toast.error('Failed to load messages');
       }
     };
+
     loadInbox();
+
+    checkIncomingCalls();
+    if (callCheckIntervalRef.current) {
+      clearInterval(callCheckIntervalRef.current);
+    }
+    callCheckIntervalRef.current = setInterval(() => {
+      checkIncomingCalls();
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      if (callCheckIntervalRef.current) {
+        clearInterval(callCheckIntervalRef.current);
+        callCheckIntervalRef.current = null;
+      }
+    };
   }, [user?.id]);
 
   useEffect(() => {
@@ -184,6 +200,13 @@ export default function Messages() {
       try {
         const conv = await messageAPI.getConversation(user.id, selectedChat);
         setMessages(conv);
+        try {
+          const chatUser = await userAPI.getUserById(selectedChat);
+          setSelectedChatUser(chatUser);
+        } catch (userErr) {
+          console.error('Failed to load selected chat user', userErr);
+          setSelectedChatUser(null);
+        }
       } catch (err) {
         console.error('Failed to load conversation', err);
       }
@@ -354,6 +377,8 @@ export default function Messages() {
     setSelectedChat(userId);
     setShowUserSelector(false);
     setSearchUsers('');
+    const chatUser = allUsers.find((u) => u.id === userId) || null;
+    setSelectedChatUser(chatUser);
   };
 
   const filteredUsers = allUsers.filter(u =>
@@ -418,18 +443,20 @@ export default function Messages() {
         <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col">
           {/* Chat Header */}
           <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            {conversations.find((c) => c.partnerId === selectedChat) && (
+            {(selectedChatUser || conversations.find((c) => c.partnerId === selectedChat)) && (
               <>
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">
-                    {conversations.find((c) => c.partnerId === selectedChat)?.avatar}
+                    {selectedChatUser?.name
+                      ? selectedChatUser.name.charAt(0).toUpperCase()
+                      : conversations.find((c) => c.partnerId === selectedChat)?.avatar}
                   </span>
                   <div>
                     <p className="font-semibold text-foreground">
-                      {conversations.find((c) => c.partnerId === selectedChat)?.name}
+                      {selectedChatUser?.name || conversations.find((c) => c.partnerId === selectedChat)?.name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {conversations.find((c) => c.partnerId === selectedChat)?.type}
+                      {selectedChatUser?.role || conversations.find((c) => c.partnerId === selectedChat)?.type}
                     </p>
                   </div>
                 </div>
@@ -604,7 +631,7 @@ export default function Messages() {
                   <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search farmers..."
+                    placeholder="Search users..."
                     value={searchUsers}
                     onChange={(e) => setSearchUsers(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
@@ -625,7 +652,7 @@ export default function Messages() {
                       <span className="text-2xl">{u.name ? u.name.charAt(0) : '👤'}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-foreground truncate">{u.name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{u.role}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{u.role?.toLowerCase()}</p>
                       </div>
                     </button>
                   ))

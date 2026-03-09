@@ -1,6 +1,7 @@
 package com.vetLiink.Backend.controller;
 
 import com.vetLiink.Backend.dto.NotificationDTO;
+import com.vetLiink.Backend.dto.ErrorResponse;
 import com.vetLiink.Backend.service.NotificationService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping
-    public ResponseEntity<NotificationDTO> createNotification(
+    public ResponseEntity<?> createNotification(
             @RequestParam Long userId,
             @RequestParam String title,
             @RequestParam String message,
@@ -27,12 +28,12 @@ public class NotificationController {
             NotificationDTO notification = notificationService.createNotification(userId, title, message, type);
             return ResponseEntity.status(201).body(notification);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
     
     @PostMapping("/with-case")
-    public ResponseEntity<NotificationDTO> createNotificationWithCase(
+    public ResponseEntity<?> createNotificationWithCase(
             @RequestParam Long userId,
             @RequestParam String title,
             @RequestParam String message,
@@ -42,49 +43,49 @@ public class NotificationController {
             NotificationDTO notification = notificationService.createNotificationWithRelatedCase(userId, title, message, type, relatedCaseId);
             return ResponseEntity.status(201).body(notification);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<NotificationDTO>> getNotificationsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<?> getNotificationsByUserId(@PathVariable Long userId) {
         try {
             List<NotificationDTO> notifications = notificationService.getNotificationsByUserId(userId);
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/user/{userId}/unread")
-    public ResponseEntity<List<NotificationDTO>> getUnreadNotifications(@PathVariable Long userId) {
+    public ResponseEntity<?> getUnreadNotifications(@PathVariable Long userId) {
         try {
             List<NotificationDTO> notifications = notificationService.getUnreadNotifications(userId);
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
     
     @GetMapping("/user/{userId}/unread-count")
-    public ResponseEntity<Map<String, Integer>> getUnreadCount(@PathVariable Long userId) {
+    public ResponseEntity<?> getUnreadCount(@PathVariable Long userId) {
         try {
             int count = notificationService.getUnreadCount(userId);
             Map<String, Integer> response = new HashMap<>();
             response.put("unreadCount", count);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/read")
-    public ResponseEntity<NotificationDTO> markAsRead(@PathVariable Long id) {
+    public ResponseEntity<?> markAsRead(@PathVariable Long id) {
         try {
             NotificationDTO notification = notificationService.markAsRead(id);
             return ResponseEntity.ok(notification);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
     

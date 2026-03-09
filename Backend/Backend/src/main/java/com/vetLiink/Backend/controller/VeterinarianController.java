@@ -1,6 +1,7 @@
 package com.vetLiink.Backend.controller;
 
 import com.vetLiink.Backend.dto.VeterinarianDTO;
+import com.vetLiink.Backend.dto.ErrorResponse;
 import com.vetLiink.Backend.service.VeterinarianService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,62 +17,62 @@ public class VeterinarianController {
     private final VeterinarianService veterinarianService;
 
     @PostMapping
-    public ResponseEntity<VeterinarianDTO> createVeterinarian(@RequestBody VeterinarianDTO veterinarianDTO) {
+    public ResponseEntity<?> createVeterinarian(@RequestBody VeterinarianDTO veterinarianDTO) {
         try {
             VeterinarianDTO created = veterinarianService.createVeterinarian(veterinarianDTO);
             return ResponseEntity.ok(created);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VeterinarianDTO> getVeterinarianById(@PathVariable Long id) {
+    public ResponseEntity<?> getVeterinarianById(@PathVariable Long id) {
         try {
             VeterinarianDTO veterinarian = veterinarianService.getVeterinarianById(id);
             return ResponseEntity.ok(veterinarian);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<VeterinarianDTO> getVeterinarianByUserId(@PathVariable Long userId) {
+    public ResponseEntity<?> getVeterinarianByUserId(@PathVariable Long userId) {
         try {
             VeterinarianDTO veterinarian = veterinarianService.getVeterinarianByUserId(userId);
             return ResponseEntity.ok(veterinarian);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<VeterinarianDTO>> getAllVeterinarians() {
+    public ResponseEntity<?> getAllVeterinarians() {
         try {
             List<VeterinarianDTO> veterinarians = veterinarianService.getAllVeterinarians();
             return ResponseEntity.ok(veterinarians);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(500).body(ErrorResponse.builder().message(e.getMessage()).status(500).build());
         }
     }
 
     @GetMapping("/location/{locationId}")
-    public ResponseEntity<List<VeterinarianDTO>> getVeterinariansByLocation(@PathVariable Long locationId) {
+    public ResponseEntity<?> getVeterinariansByLocation(@PathVariable Long locationId) {
         try {
             List<VeterinarianDTO> veterinarians = veterinarianService.getVeterinariansByLocation(locationId);
             return ResponseEntity.ok(veterinarians);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(500).body(ErrorResponse.builder().message(e.getMessage()).status(500).build());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VeterinarianDTO> updateVeterinarian(@PathVariable Long id, @RequestBody VeterinarianDTO veterinarianDTO) {
+    public ResponseEntity<?> updateVeterinarian(@PathVariable Long id, @RequestBody VeterinarianDTO veterinarianDTO) {
         try {
             VeterinarianDTO updated = veterinarianService.updateVeterinarian(id, veterinarianDTO);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 

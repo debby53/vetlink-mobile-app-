@@ -21,10 +21,12 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.3.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",
+    "sockjs-client": "^1.6.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {

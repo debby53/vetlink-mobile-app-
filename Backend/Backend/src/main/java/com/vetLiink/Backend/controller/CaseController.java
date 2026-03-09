@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vetLiink.Backend.dto.CaseDTO;
+import com.vetLiink.Backend.dto.ErrorResponse;
 import com.vetLiink.Backend.service.CaseService;
 
 import lombok.AllArgsConstructor;
@@ -54,7 +55,7 @@ public class CaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CaseDTO> getCaseById(@PathVariable Long id) {
+    public ResponseEntity<?> getCaseById(@PathVariable Long id) {
         try {
             System.out.println("Fetching case with ID: " + id);
             CaseDTO caze = caseService.getCaseById(id);
@@ -63,7 +64,7 @@ public class CaseController {
         } catch (Exception e) {
             System.err.println("Error fetching case: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
 
@@ -86,106 +87,106 @@ public class CaseController {
     }
 
     @GetMapping("/location/{locationId}/available")
-    public ResponseEntity<List<CaseDTO>> getAvailableCasesByLocation(@PathVariable Long locationId) {
+    public ResponseEntity<?> getAvailableCasesByLocation(@PathVariable Long locationId) {
         try {
             List<CaseDTO> cases = caseService.getAvailableCasesByLocation(locationId);
             return ResponseEntity.ok(cases);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/escalated")
-    public ResponseEntity<List<CaseDTO>> getEscalatedCases() {
+    public ResponseEntity<?> getEscalatedCases() {
         try {
             List<CaseDTO> cases = caseService.getEscalatedCases();
             return ResponseEntity.ok(cases);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/veterinarian/{veterinarianId}/sector")
-    public ResponseEntity<List<CaseDTO>> getCasesByVeterinarianLocation(@PathVariable Long veterinarianId) {
+    public ResponseEntity<?> getCasesByVeterinarianLocation(@PathVariable Long veterinarianId) {
         try {
             List<CaseDTO> cases = caseService.getCasesByVeterinarianLocation(veterinarianId);
             return ResponseEntity.ok(cases);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/cahw/{cahwId}/sector")
-    public ResponseEntity<List<CaseDTO>> getCasesByCAHWLocation(@PathVariable Long cahwId) {
+    public ResponseEntity<?> getCasesByCAHWLocation(@PathVariable Long cahwId) {
         try {
             List<CaseDTO> cases = caseService.getCasesByCAHWLocation(cahwId);
             return ResponseEntity.ok(cases);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/assign-cahw/{cahwId}")
-    public ResponseEntity<CaseDTO> assignToCAHW(@PathVariable Long id, @PathVariable Long cahwId) {
+    public ResponseEntity<?> assignToCAHW(@PathVariable Long id, @PathVariable Long cahwId) {
         try {
             CaseDTO updatedCase = caseService.assignToCAHW(id, cahwId);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/assign/{veterinarianId}")
-    public ResponseEntity<CaseDTO> assignToVeterinarian(@PathVariable Long id, @PathVariable Long veterinarianId) {
+    public ResponseEntity<?> assignToVeterinarian(@PathVariable Long id, @PathVariable Long veterinarianId) {
         try {
             CaseDTO updatedCase = caseService.assignToVeterinarian(id, veterinarianId);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CaseDTO> updateCase(@PathVariable Long id, @RequestBody CaseDTO caseDTO) {
+    public ResponseEntity<?> updateCase(@PathVariable Long id, @RequestBody CaseDTO caseDTO) {
         try {
             CaseDTO updatedCase = caseService.updateCase(id, caseDTO);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/mark-received")
-    public ResponseEntity<CaseDTO> markCaseAsReceived(@PathVariable Long id, @RequestParam(required = false) Long userId) {
+    public ResponseEntity<?> markCaseAsReceived(@PathVariable Long id, @RequestParam(required = false) Long userId) {
         try {
             CaseDTO updatedCase = caseService.markCaseAsReceived(id, userId);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/mark-completed")
-    public ResponseEntity<CaseDTO> markCaseAsCompleted(@PathVariable Long id, @RequestBody CaseDTO caseDTO) {
+    public ResponseEntity<?> markCaseAsCompleted(@PathVariable Long id, @RequestBody CaseDTO caseDTO) {
         try {
             CaseDTO updatedCase = caseService.markCaseAsCompleted(id, caseDTO);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/escalate")
-    public ResponseEntity<CaseDTO> escalateCase(@PathVariable Long id, @RequestBody Map<String, String> request) {
+    public ResponseEntity<?> escalateCase(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
             String escalationReason = request.get("escalationReason");
             if (escalationReason == null || escalationReason.trim().isEmpty()) {
-                return ResponseEntity.status(400).body(null);
+                return ResponseEntity.status(400).body(ErrorResponse.builder().message("Escalation reason is required").status(400).build());
             }
             CaseDTO updatedCase = caseService.escalateCaseToVeterinarians(id, escalationReason);
             return ResponseEntity.ok(updatedCase);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 

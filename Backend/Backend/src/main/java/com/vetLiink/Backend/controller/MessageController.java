@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vetLiink.Backend.dto.MessageDTO;
+import com.vetLiink.Backend.dto.ErrorResponse;
 import com.vetLiink.Backend.service.MessageService;
 
 import lombok.AllArgsConstructor;
@@ -27,62 +28,62 @@ public class MessageController {
     private final MessageService messageService;
 
     @PostMapping
-    public ResponseEntity<MessageDTO> sendMessage(@RequestBody MessageDTO messageDTO) {
+    public ResponseEntity<?> sendMessage(@RequestBody MessageDTO messageDTO) {
         try {
             MessageDTO newMessage = messageService.sendMessage(messageDTO);
             return ResponseEntity.status(201).body(newMessage);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/conversation")
-    public ResponseEntity<List<MessageDTO>> getConversation(@RequestParam Long userId1, @RequestParam Long userId2) {
+    public ResponseEntity<?> getConversation(@RequestParam Long userId1, @RequestParam Long userId2) {
         try {
             List<MessageDTO> messages = messageService.getConversation(userId1, userId2);
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/inbox/{userId}")
-    public ResponseEntity<List<MessageDTO>> getInboxMessages(@PathVariable Long userId) {
+    public ResponseEntity<?> getInboxMessages(@PathVariable Long userId) {
         try {
             List<MessageDTO> messages = messageService.getInboxMessages(userId);
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @GetMapping("/unread/{userId}")
-    public ResponseEntity<List<MessageDTO>> getUnreadMessages(@PathVariable Long userId) {
+    public ResponseEntity<?> getUnreadMessages(@PathVariable Long userId) {
         try {
             List<MessageDTO> messages = messageService.getUnreadMessages(userId);
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 
     @PutMapping("/{id}/read")
-    public ResponseEntity<MessageDTO> markAsRead(@PathVariable Long id) {
+    public ResponseEntity<?> markAsRead(@PathVariable Long id) {
         try {
             MessageDTO message = messageService.markAsRead(id);
             return ResponseEntity.ok(message);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MessageDTO> updateMessage(@PathVariable Long id, @RequestBody MessageDTO messageDTO) {
+    public ResponseEntity<?> updateMessage(@PathVariable Long id, @RequestBody MessageDTO messageDTO) {
         try {
             MessageDTO updatedMessage = messageService.updateMessage(id, messageDTO);
             return ResponseEntity.ok(updatedMessage);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { API_BASE } from '@/lib/apiConfig';
 import AdminApplicationManager from './AdminApplicationManager';
 import CAHWApplicationManager from './CAHWApplicationManager';
 
@@ -18,7 +19,7 @@ interface UserStatus {
 }
 
 const PendingVerificationDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,14 +30,13 @@ const PendingVerificationDashboard: React.FC = () => {
 
   const fetchUserStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
         setError('Please wait for the approval from our team');
         setLoading(false);
         return;
       }
 
-      const response = await fetch('/api/user/status', {
+      const response = await fetch(`${API_BASE}/user/status`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

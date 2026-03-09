@@ -1,5 +1,4 @@
-// Location service uses the same backend as main API
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8888/api';
+import { API_BASE } from './apiConfig';
 
 export interface ProvinceDTO {
   id: number;

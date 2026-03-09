@@ -9,6 +9,7 @@ import com.vetLiink.Backend.repository.UserRepository;
 import com.vetLiink.Backend.repository.VeterinarianRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,24 +41,28 @@ public class VeterinarianService {
         return convertToDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public VeterinarianDTO getVeterinarianById(Long id) {
         Veterinarian veterinarian = veterinarianRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Veterinarian not found"));
         return convertToDTO(veterinarian);
     }
 
+    @Transactional(readOnly = true)
     public VeterinarianDTO getVeterinarianByUserId(Long userId) {
         Veterinarian veterinarian = veterinarianRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Veterinarian not found for this user"));
         return convertToDTO(veterinarian);
     }
 
+    @Transactional(readOnly = true)
     public List<VeterinarianDTO> getAllVeterinarians() {
         return veterinarianRepository.findAllActive().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<VeterinarianDTO> getVeterinariansByLocation(Long locationId) {
         return veterinarianRepository.findByLocationId(locationId).stream()
                 .map(this::convertToDTO)
@@ -85,6 +90,17 @@ public class VeterinarianService {
         veterinarianRepository.delete(veterinarian);
     }
 
+    private String resolveLocationName(User user) {
+        try {
+            if (user.getLocation() != null) {
+                return user.getLocation().getDisplayName();
+            }
+        } catch (Exception e) {
+            System.err.println("Could not load veterinarian location name: " + e.getMessage());
+        }
+        return null;
+    }
+
     private VeterinarianDTO convertToDTO(Veterinarian veterinarian) {
         User user = veterinarian.getUser();
         
@@ -102,7 +118,7 @@ public class VeterinarianService {
                 .licenseNumber(veterinarian.getLicenseNumber())
                 .active(user.getActive())
                 .locationId(user.getLocation() != null ? user.getLocation().getId() : null)
-                .locationName(user.getLocation() != null ? user.getLocation().getDisplayName() : null)
+                .locationName(resolveLocationName(user))
                 .activeCases(activeCases.size())
                 .totalCasesResolved(veterinarian.getTotalCasesResolved() != null ? veterinarian.getTotalCasesResolved() : 0)
                 .averageResponseTime(veterinarian.getAverageResponseTime())

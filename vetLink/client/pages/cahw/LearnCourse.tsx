@@ -10,6 +10,7 @@ import {
   Award,
 } from "lucide-react";
 import { trainingAPI, userTrainingAPI, quizAPI } from "@/lib/apiService";
+import { API_BASE } from "@/lib/apiConfig";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
 import QuizPlayer from "@/components/QuizPlayer";
@@ -41,9 +42,6 @@ export default function LearnCourse() {
 
   // State for real lessons
   const [courseLessons, setCourseLessons] = useState<any[]>([]);
-
-  // API base URL
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8888/api';
 
   // Auto-generate dummy lessons ONLY if API returns empty
   const dummyLessons: Lesson[] = Array.from({ length: training?.lessons || 12 }, (_, i) => ({

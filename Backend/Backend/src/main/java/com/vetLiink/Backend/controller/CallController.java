@@ -132,19 +132,17 @@ public class CallController {
     public ResponseEntity<List<CallDTO>> getIncomingCalls(Authentication authentication) {
         try {
             if (authentication == null) {
-                System.err.println("❌ No authentication in incoming calls endpoint");
+                log.warn("No authentication in incoming calls endpoint");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             Long userId = Long.parseLong(authentication.getName());
-            System.out.println("✅ Getting incoming calls for user: " + userId);
             List<CallDTO> calls = callService.getIncomingCalls(userId);
             return ResponseEntity.ok(calls);
         } catch (NumberFormatException e) {
-            System.err.println("❌ NumberFormatException in incoming calls: " + e.getMessage());
+            log.warn("NumberFormatException in incoming calls: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
-            System.err.println("❌ Exception in incoming calls: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Exception in incoming calls: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }

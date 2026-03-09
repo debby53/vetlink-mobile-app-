@@ -7,6 +7,7 @@ import { Upload, X, CheckCircle, Clock, FileText, Plus, Film, Trash2, ArrowRight
 import { toast } from "sonner";
 import { trainingAPI } from '@/lib/apiService';
 import { useAuth } from "@/lib/AuthContext";
+import { API_BASE } from "@/lib/apiConfig";
 
 interface LessonDraft {
   id?: number;
@@ -125,7 +126,6 @@ export default function VeterinarianTrainingUpload() {
     setLessons(prev => prev.map(l => l.tempId === lesson.tempId ? { ...l, status: 'uploading' } : l));
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8888/api';
       const token = localStorage.getItem('vetlink_token');
 
       // 1. Create Lesson Entity

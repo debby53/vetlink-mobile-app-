@@ -4,6 +4,7 @@ import com.vetLiink.Backend.entity.User;
 import com.vetLiink.Backend.entity.UserStatus;
 import com.vetLiink.Backend.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,9 +15,14 @@ import java.time.LocalDateTime;
 public class AdminSeederConfig {
 
     @Bean
+    @ConditionalOnProperty(name = "app.seed.admin.enabled", havingValue = "true")
     public CommandLineRunner seedAdminUser(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             String adminEmail = "admin@vetlink.com";
+            if (userRepository.findByEmail(adminEmail).isPresent()) {
+                System.out.println("Admin user already exists. Seeder skipped.");
+                return;
+            }
             if (userRepository.findByEmail(adminEmail).isEmpty()) {
                 System.out.println("🌱 Seeding Admin User...");
                 User admin = User.builder()

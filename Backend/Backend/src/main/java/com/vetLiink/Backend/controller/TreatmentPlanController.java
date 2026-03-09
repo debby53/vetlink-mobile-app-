@@ -46,12 +46,12 @@ public class TreatmentPlanController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TreatmentPlanDTO> getTreatmentPlanById(@PathVariable Long id) {
+    public ResponseEntity<?> getTreatmentPlanById(@PathVariable Long id) {
         try {
             TreatmentPlanDTO plan = treatmentPlanService.getTreatmentPlanById(id);
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(404).body(ErrorResponse.builder().message(e.getMessage()).status(404).build());
         }
     }
 
@@ -68,12 +68,12 @@ public class TreatmentPlanController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TreatmentPlanDTO> updateTreatmentPlan(@PathVariable Long id, @RequestBody TreatmentPlanDTO treatmentPlanDTO) {
+    public ResponseEntity<?> updateTreatmentPlan(@PathVariable Long id, @RequestBody TreatmentPlanDTO treatmentPlanDTO) {
         try {
             TreatmentPlanDTO updatedPlan = treatmentPlanService.updateTreatmentPlan(id, treatmentPlanDTO);
             return ResponseEntity.ok(updatedPlan);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(400).body(ErrorResponse.builder().message(e.getMessage()).status(400).build());
         }
     }
 

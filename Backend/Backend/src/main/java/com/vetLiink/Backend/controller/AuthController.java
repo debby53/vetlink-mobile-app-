@@ -4,7 +4,11 @@ import com.vetLiink.Backend.dto.LoginRequest;
 import com.vetLiink.Backend.dto.SignupRequest;
 import com.vetLiink.Backend.dto.AuthResponse;
 import com.vetLiink.Backend.dto.ErrorResponse;
+import com.vetLiink.Backend.dto.ForgotPasswordRequest;
+import com.vetLiink.Backend.dto.ForgotPasswordResponse;
+import com.vetLiink.Backend.dto.ResetPasswordRequest;
 import com.vetLiink.Backend.service.AuthService;
+import com.vetLiink.Backend.service.PasswordResetService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class AuthController {
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -70,6 +75,34 @@ public class AuthController {
                     .body(ErrorResponse.builder()
                             .message(e.getMessage() != null ? e.getMessage() : "OTP verification failed")
                             .status(401)
+                            .build());
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            ForgotPasswordResponse response = passwordResetService.createResetToken(request.getEmail());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                    .body(ErrorResponse.builder()
+                            .message(e.getMessage() != null ? e.getMessage() : "Failed to start password reset")
+                            .status(400)
+                            .build());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            passwordResetService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok(java.util.Collections.singletonMap("message", "Password reset successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                    .body(ErrorResponse.builder()
+                            .message(e.getMessage() != null ? e.getMessage() : "Failed to reset password")
+                            .status(400)
                             .build());
         }
     }
