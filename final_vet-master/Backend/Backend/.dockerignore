@@ -1,0 +1,12 @@
+.git
+.gitignore
+target
+uploads
+*.log
+compile-output.txt
+error_log.txt
+run.log
+run_final.log
+run_success.log
+startup.log
+startup_error.log
