@@ -12,6 +12,16 @@ node_modules/
 # Logs
 *.log
 
+# Environment files
+.env
+*.env
+!*.env.example
+Backend/Backend/src/main/resources/.env
+vetLink/.env
+
+# Local apps / worktrees
+vetlink_mobile/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -21,12 +21,24 @@ public class DatabaseInitializer {
             
             // Drop the old constraint
             entityManager.createNativeQuery(
-                "ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check"
-            ).executeUpdate();
-            
-            // Add the new constraint with CALL type
-            entityManager.createNativeQuery(
-                "ALTER TABLE notifications ADD CONSTRAINT notifications_type_check CHECK (type IN ('ALERT', 'INFO', 'SUCCESS', 'WARNING', 'CALL'))"
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public' AND table_name = 'notifications'
+                    ) THEN
+                        ALTER TABLE notifications
+                            DROP CONSTRAINT IF EXISTS notifications_type_check;
+
+                        ALTER TABLE notifications
+                            ADD CONSTRAINT notifications_type_check
+                            CHECK (type IN ('ALERT', 'INFO', 'SUCCESS', 'WARNING', 'CALL'));
+                    END IF;
+                END
+                $$;
+                """
             ).executeUpdate();
             
             log.info("✅ Constraint updated successfully!");

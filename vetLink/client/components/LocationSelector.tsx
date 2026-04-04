@@ -23,23 +23,37 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
   const [selectedCell, setSelectedCell] = useState<string>(selectedCellId?.toString() || '');
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   // Load provinces on mount
   useEffect(() => {
+    let cancelled = false;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const loadProvinces = async () => {
       try {
         setLoading(true);
+        setLoadError('');
         const data = await locationService.getProvinces();
+        if (cancelled) return;
         setProvinces(data);
-      } catch (error) {
-        toast.error('Failed to load provinces');
-        console.error(error);
-      } finally {
         setLoading(false);
+      } catch (error) {
+        if (cancelled) return;
+        console.error(error);
+        setLoadError('Locations are still starting up. Retrying...');
+        retryTimeout = setTimeout(loadProvinces, 5000);
       }
     };
 
-    loadProvinces();
+    void loadProvinces();
+
+    return () => {
+      cancelled = true;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
   }, []);
 
   // Load districts when province changes
@@ -93,7 +107,29 @@ export default function LocationSelector({ onLocationSelect, selectedCellId, lab
   }, [selectedSector, onLocationSelect, sectors, districts, selectedDistrict]);
 
   if (loading && provinces.length === 0) {
-    return <div className="text-sm text-muted-foreground">Loading locations...</div>;
+    return (
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <div>Loading locations...</div>
+        {loadError && <div>{loadError}</div>}
+      </div>
+    );
+  }
+
+  if (!loading && provinces.length === 0) {
+    return (
+      <div className="space-y-3">
+        <div className="text-sm text-destructive">
+          Failed to load locations.
+        </div>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded-lg border px-3 py-2 text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (

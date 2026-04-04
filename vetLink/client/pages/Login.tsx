@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage, Language } from '@/lib/LanguageContext';
 import { Eye, EyeOff, ArrowRight, Globe, ChevronDown, Check, Smartphone, Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loginWithPhone, verifyOtp } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [showLoginLangMenu, setShowLoginLangMenu] = useState(false);
+  const successMessage = location.state?.successMessage as string | undefined;
 
   // Form State
   const [identifier, setIdentifier] = useState('');
@@ -157,6 +159,12 @@ export default function Login() {
             {error && (
               <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-600">
                 {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="mb-6 rounded-lg bg-emerald-50 p-4 text-sm text-emerald-700">
+                {successMessage}
               </div>
             )}
 

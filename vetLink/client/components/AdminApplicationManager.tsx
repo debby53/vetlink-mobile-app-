@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { API_BASE } from '@/lib/apiConfig';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Application {
   id: number;
@@ -23,6 +32,8 @@ const AdminApplicationManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState('PENDING_VERIFICATION');
   const [actionInProgress, setActionInProgress] = useState<number | null>(null);
+  const [applicationToReject, setApplicationToReject] = useState<Application | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
     fetchApplications();
@@ -112,6 +123,33 @@ const AdminApplicationManager: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to reject');
     } finally {
       setActionInProgress(null);
+    }
+  };
+
+  const openRejectDialog = (application: Application) => {
+    setApplicationToReject(application);
+    setRejectionReason(application.rejectionReason || '');
+    setError(null);
+  };
+
+  const closeRejectDialog = () => {
+    if (actionInProgress !== null) {
+      return;
+    }
+    setApplicationToReject(null);
+    setRejectionReason('');
+  };
+
+  const confirmRejectApplication = async () => {
+    if (!applicationToReject) {
+      return;
+    }
+
+    await rejectApplication(applicationToReject.id, rejectionReason);
+
+    if (rejectionReason.trim()) {
+      setApplicationToReject(null);
+      setRejectionReason('');
     }
   };
 
@@ -227,10 +265,7 @@ const AdminApplicationManager: React.FC = () => {
                     Approve
                   </button>
                   <button
-                    onClick={() => {
-                      const reason = prompt('Please provide a rejection reason:');
-                      if (reason) rejectApplication(app.id, reason);
-                    }}
+                    onClick={() => openRejectDialog(app)}
                     disabled={actionInProgress === app.id}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                   >
@@ -254,6 +289,53 @@ const AdminApplicationManager: React.FC = () => {
           ))
         )}
       </div>
+
+      <Dialog open={!!applicationToReject} onOpenChange={(open) => !open && closeRejectDialog()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <XCircle size={18} />
+              Reject Application
+            </DialogTitle>
+            <DialogDescription>
+              Provide a clear reason for rejecting {applicationToReject?.name}&apos;s application. They will see this message in their account.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-900">
+              <p className="font-medium">{applicationToReject?.name}</p>
+              <p className="text-red-700">{applicationToReject?.email}</p>
+            </div>
+            <Textarea
+              value={rejectionReason}
+              onChange={(event) => setRejectionReason(event.target.value)}
+              placeholder="Explain why this application cannot be approved right now..."
+              className="min-h-[120px]"
+              disabled={actionInProgress === applicationToReject?.id}
+            />
+          </div>
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={closeRejectDialog}
+              disabled={actionInProgress === applicationToReject?.id}
+              className="inline-flex items-center justify-center rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmRejectApplication}
+              disabled={actionInProgress === applicationToReject?.id}
+              className="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {actionInProgress === applicationToReject?.id ? 'Rejecting...' : 'Reject Application'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.vetLiink.Backend.dto.UserLessonProgressDTO;
 import com.vetLiink.Backend.entity.Lesson;
-import com.vetLiink.Backend.entity.UserLessonProgress;
 import com.vetLiink.Backend.service.LessonService;
 
 @RestController
@@ -201,7 +201,7 @@ public class LessonController {
 
     // Mark lesson as complete
     @PostMapping("/enrollments/{enrollmentId}/lessons/{lessonId}/complete")
-    public ResponseEntity<UserLessonProgress> completeLesson(
+    public ResponseEntity<UserLessonProgressDTO> completeLesson(
             @PathVariable Long enrollmentId,
             @PathVariable Long lessonId,
             @RequestBody(required = false) Map<String, Integer> body) {

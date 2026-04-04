@@ -118,12 +118,15 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok("User deleted successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(404).body("User not found or cannot be deleted");
+            String message = e.getMessage() != null ? e.getMessage() : "Failed to delete user";
+            int status = "User not found".equalsIgnoreCase(message) ? 404 : 400;
+            return ResponseEntity.status(status)
+                    .body(ErrorResponse.builder().message(message).status(status).build());
         }
     }
 }

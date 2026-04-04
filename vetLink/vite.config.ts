@@ -1,7 +1,12 @@
 import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import dotenv from "dotenv";
 import { createServer } from "./server";
+
+dotenv.config();
+
+const backendOrigin = process.env.VITE_BACKEND_ORIGIN?.trim() || "http://localhost:8081";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -10,9 +15,32 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8888",
+        target: backendOrigin,
         changeOrigin: true,
         secure: false,
+      },
+      "/uploads": {
+        target: backendOrigin,
+        changeOrigin: true,
+        secure: false,
+      },
+      "/ws-call": {
+        target: backendOrigin,
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      "/ws-call-sockjs": {
+        target: backendOrigin,
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      "/ws-market": {
+        target: backendOrigin,
+        changeOrigin: true,
+        secure: false,
+        ws: true,
       },
     },
     fs: {

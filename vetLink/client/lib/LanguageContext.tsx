@@ -227,6 +227,7 @@ const translations = {
     continue: 'Continue',
     creatingAccount: 'Creating Account...',
     accountCreated: 'Account created successfully!',
+    signupPendingApproval: 'Your account request has been received. Please wait for approval by the administrator. You will receive an email once your account is approved.',
 
     // Role Descriptions
     roleFarmerDesc: 'Access veterinary care via USSD, mobile app, and web portal',
@@ -1099,6 +1100,7 @@ const translations = {
     continue: 'Komeza',
     creatingAccount: 'Gukora Konti...',
     accountCreated: 'Konti yaremwe neza!',
+    signupPendingApproval: 'Ubusabe bwa konti yawe bwakiriwe. Tegereza ko umuyobozi abyemeza. Tuzakohereza email konti yawe imaze kwemezwa.',
 
     // Role Descriptions
     roleFarmerDesc: 'Bona ubuvuzi ukoresheje USSD, porogaramu cyangwa urubuga',
@@ -1975,6 +1977,7 @@ const translations = {
     continue: 'Continuer',
     creatingAccount: 'Création du Compte...',
     accountCreated: 'Compte créé avec succès!',
+    signupPendingApproval: 'Votre demande de compte a bien été reçue. Veuillez attendre l’approbation de l’administrateur. Vous recevrez un e-mail dès que votre compte sera approuvé.',
 
     // Role Descriptions
     roleFarmerDesc: 'Accédez aux soins vétérinaires via USSD, application mobile et portail web',

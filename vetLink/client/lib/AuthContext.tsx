@@ -10,6 +10,11 @@ export interface User {
   status?: string;
 }
 
+export interface SignupResult {
+  requiresApproval: boolean;
+  message: string;
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -18,7 +23,7 @@ interface AuthContextType {
   login: (email: string, password: string, role: string) => Promise<void>;
   loginWithPhone: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, otp: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, role: string, locationId?: number, sector?: string, district?: string, phone?: string, specialization?: string, licenseNumber?: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: string, locationId?: number, sector?: string, district?: string, phone?: string, specialization?: string, licenseNumber?: string) => Promise<SignupResult>;
   logout: () => void;
 }
 
@@ -153,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     phone?: string,
     specialization?: string,
     licenseNumber?: string
-  ) => {
+  ): Promise<SignupResult> => {
     try {
       const signupData: any = { name, email, password, role, locationId };
       if (sector) signupData.sector = sector;
@@ -181,59 +186,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         locationId: data.locationId || locationId,
         status: data.status || 'PENDING_VERIFICATION',
       };
+      const receivedToken = data.token || data.accessToken;
+      const requiresApproval = Boolean(data.requiresApproval || !receivedToken);
+      const message = data.message || (requiresApproval
+        ? 'Your account request has been received. Please wait for approval by the administrator. You will receive an email once your account is approved.'
+        : 'Account created successfully!');
 
-      // Don't auto-login pending users
-      // setUser(newUser);
-      // setToken(data.token || data.accessToken);
-      // localStorage.setItem('vetlink_user', JSON.stringify(newUser));
-      // localStorage.setItem('vetlink_token', data.token || data.accessToken);
+      if (!requiresApproval && receivedToken) {
+        setUser(newUser);
+        setToken(receivedToken);
+        localStorage.setItem('vetlink_user', JSON.stringify(newUser));
+        localStorage.setItem('vetlink_token', receivedToken);
+      }
 
-      // If the backend returns a token, we could theoretically log them in,
-      // but for pending status, maybe we want them to go to login page first?
-      // Actually, standard flow is auto-login.
-      // If we auto-login, they go to dashboard -> hits pending check -> shows pending screen.
-      // If we DON'T auto-login, they go to /login -> login -> dashboard -> pending check.
-      // The user issue: "when i'm sign up it shows me that there's an error... but works"
-      // The error is "Email already exists". This is likely due to double submission which I fixed in Signup.tsx.
-
-      // But "when i logged in with that credentials works properly ... active in users whithin admin dashboard"
-      // Wait, if they are active in admin dashboard, that means they are NOT pending?
-      // Ah! In `authService.java` (backend), I changed the logic:
-      /*
-        if (userRole == User.UserRole.FARMER) { active=true; status=ACTIVE; }
-        else { active=false; status=PENDING; }
-      */
-
-      // So Vets/CAHWs should be PENDING.
-      // If Admin sees them as active, maybe the Admin UI is misinterpreting something?
-      // In `Users.tsx`:
-      /*
-       <span className={`... ${user.status === 'ACTIVE' || user.active === true ? 'bg-green...' : ...}`}>
-         {user.status ? user.status... : (user.active ? 'ACTIVE' : 'INACTIVE')}
-       </span>
-      */
-
-      // If `user.status` is "PENDING_VERIFICATION", it should show that.
-      // `user.active` is false.
-
-      // The user said "i'm seeing that are active in users whithin admin dashboard".
-      // Maybe my previous fetch (active users) was ONLY fetching active users, so pending ones weren't showing up?
-      // But now I fixed the fetch to return ALL users.
-
-      // I will proceed with fixing the Signup auto-login anyway to provide a cleaner flow if desired,
-      // but the main issue "active in users" might be resolved by the fetch fix I just did (showing ALL users instead of just active, so now we can see pending ones correctly distinugished).
-
-      // Actually, if I remove auto-login, I must update Signup.tsx to NOT redirect to /login immediately but show success message. 
-      // Signup.tsx already redirects to /login.
-      // If I remove setUser/setToken here, the context won't be updated.
-      // Then navigate('/login') happens.
-      // This is fine.
-
-      // BUT, let's keep auto-login for better UX, they will just land on "Pending Verification".
-      setUser(newUser);
-      setToken(data.token || data.accessToken);
-      localStorage.setItem('vetlink_user', JSON.stringify(newUser));
-      localStorage.setItem('vetlink_token', data.token || data.accessToken);
+      return { requiresApproval, message };
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -243,8 +209,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('vetlink_user');
-    localStorage.removeItem('vetlink_token');
+      localStorage.removeItem('vetlink_user');
+      localStorage.removeItem('vetlink_token');
   };
 
   return (

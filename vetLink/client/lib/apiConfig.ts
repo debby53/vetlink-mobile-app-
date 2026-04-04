@@ -1,5 +1,5 @@
 const rawApiBase = import.meta.env.VITE_API_URL?.trim();
-const defaultApiBase = import.meta.env.DEV ? "http://localhost:8888/api" : "/api";
+const defaultApiBase = "/api";
 
 export const API_BASE = rawApiBase && rawApiBase.length > 0
   ? rawApiBase.replace(/\/+$/, "")

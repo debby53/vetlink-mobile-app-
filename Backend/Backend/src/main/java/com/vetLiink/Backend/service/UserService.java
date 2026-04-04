@@ -185,10 +185,6 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getStatus() != UserStatus.SUSPENDED) {
-            throw new RuntimeException("Only suspended users can be permanently deleted");
-        }
-
         clearUserReferences(id);
         deleteRoleSpecificData(user);
 

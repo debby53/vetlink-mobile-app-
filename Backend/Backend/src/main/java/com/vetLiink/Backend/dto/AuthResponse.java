@@ -14,4 +14,6 @@ public class AuthResponse {
     private String status;
     private String token;
     private Long locationId;
+    private String message;
+    private Boolean requiresApproval;
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vetLiink.Backend.dto.UserLessonProgressDTO;
 import com.vetLiink.Backend.entity.Lesson;
 import com.vetLiink.Backend.entity.Training;
 import com.vetLiink.Backend.entity.UserLessonProgress;
@@ -162,7 +163,7 @@ public class LessonService {
     /**
      * Mark a lesson as completed for a user (via their enrollment/userTraining).
      */
-    public UserLessonProgress markLessonComplete(Long enrollmentId, Long lessonId, Integer stoppedAtSeconds) {
+    public UserLessonProgressDTO markLessonComplete(Long enrollmentId, Long lessonId, Integer stoppedAtSeconds) {
         UserTraining enrollment = userTrainingRepository.findById(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
 
@@ -188,9 +189,22 @@ public class LessonService {
         updateOverallProgress(enrollment);
         
         // Check if all lessons are now complete
-        isEnrollmentComplete(enrollmentId);
+        boolean courseCompleted = isEnrollmentComplete(enrollmentId);
 
-        return saved;
+        UserTraining refreshedEnrollment = userTrainingRepository.findById(enrollmentId)
+                .orElseThrow(() -> new RuntimeException("Enrollment not found"));
+
+        return UserLessonProgressDTO.builder()
+                .id(saved.getId())
+                .userTrainingId(refreshedEnrollment.getId())
+                .lessonId(lesson.getId())
+                .completed(saved.getCompleted())
+                .stoppedAtSeconds(saved.getStoppedAtSeconds())
+                .updatedAt(saved.getUpdatedAt())
+                .progressPercentage(refreshedEnrollment.getProgressPercentage())
+                .enrollmentStatus(refreshedEnrollment.getStatus().name())
+                .courseCompleted(courseCompleted)
+                .build();
     }
 
     /**

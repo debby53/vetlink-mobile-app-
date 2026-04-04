@@ -5,7 +5,7 @@ import com.vetLiink.Backend.dto.UserApplicationDTO;
 import com.vetLiink.Backend.entity.User;
 import com.vetLiink.Backend.entity.UserStatus;
 import com.vetLiink.Backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +17,12 @@ import java.util.stream.Collectors;
  * Service for CAHW application approvals by veterinarians in the same sector
  */
 @Service
+@AllArgsConstructor
 public class CAHWApplicationService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final EmailNotificationService emailNotificationService;
+    private final NotificationService notificationService;
 
     /**
      * Get all pending CAHW applications in the same sector as the veterinarian
@@ -69,9 +71,17 @@ public class CAHWApplicationService {
 
         // Update CAHW status
         cahw.setStatus(UserStatus.ACTIVE);
+        cahw.setActive(true);
         cahw.setApprovedBy(veterinarian);
         cahw.setApprovedAt(LocalDateTime.now());
-        userRepository.save(cahw);
+        User savedCahw = userRepository.save(cahw);
+        notificationService.createNotification(
+                savedCahw.getId(),
+                "Account approved",
+                "Your CAHW account has been approved. You can now sign in and access your VetLink dashboard.",
+                "SUCCESS"
+        );
+        emailNotificationService.sendApprovalEmail(savedCahw);
     }
 
     /**
@@ -97,10 +107,18 @@ public class CAHWApplicationService {
 
         // Update CAHW status to SUSPENDED and store rejection reason
         cahw.setStatus(UserStatus.SUSPENDED);
+        cahw.setActive(false);
         cahw.setRejectionReason(request.getRejectionReason());
         cahw.setApprovedBy(veterinarian);
         cahw.setApprovedAt(LocalDateTime.now());
-        userRepository.save(cahw);
+        User savedCahw = userRepository.save(cahw);
+        notificationService.createNotification(
+                savedCahw.getId(),
+                "Application update",
+                "Your CAHW application requires attention. Reason: " + request.getRejectionReason(),
+                "WARNING"
+        );
+        emailNotificationService.sendRejectionEmail(savedCahw, request.getRejectionReason());
     }
 
     private UserApplicationDTO convertToDTO(User user) {

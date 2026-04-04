@@ -19,6 +19,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
@@ -53,6 +62,9 @@ export default function AdminUsers() {
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [userToReject, setUserToReject] = useState<any>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isRejectingUser, setIsRejectingUser] = useState(false);
 
   // Location state for the add/edit user form
   const [locationState, setLocationState] = useState<{
@@ -106,25 +118,42 @@ export default function AdminUsers() {
   };
 
   const handleRejectUser = async (userId: number) => {
-    const reason = prompt('Please provide a reason for rejection:');
-    if (!reason) return;
+    const selectedUser = users.find((candidate) => candidate.id === userId);
+    if (!selectedUser) {
+      toast.error('User not found');
+      return;
+    }
+
+    setUserToReject(selectedUser);
+    setRejectionReason(selectedUser.rejectionReason || '');
+  };
+
+  const confirmRejectUser = async () => {
+    if (!userToReject) {
+      return;
+    }
+
+    if (!rejectionReason.trim()) {
+      toast.error('Please provide a reason for rejection');
+      return;
+    }
 
     try {
-      await userAPI.rejectUser(userId, reason);
+      setIsRejectingUser(true);
+      await userAPI.rejectUser(userToReject.id, rejectionReason);
       toast.success('User rejected');
+      setUserToReject(null);
+      setRejectionReason('');
       loadUsers();
     } catch (err: any) {
       console.error('Error rejecting user:', err);
-      toast.error('Failed to reject user');
+      toast.error(err.message || 'Failed to reject user');
+    } finally {
+      setIsRejectingUser(false);
     }
   };
 
   const handleDeleteUser = async (user: any) => {
-    if (user.status !== 'SUSPENDED') {
-      toast.error('Only suspended users can be permanently deleted');
-      return;
-    }
-
     setUserToDelete(user);
   };
 
@@ -139,7 +168,7 @@ export default function AdminUsers() {
       loadUsers();
     } catch (err: any) {
       console.error('Error deleting user:', err);
-      toast.error('Failed to delete user');
+      toast.error(err.message || 'Failed to delete user');
     } finally {
       setIsDeletingUser(false);
     }
@@ -507,14 +536,14 @@ export default function AdminUsers() {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Delete Suspended User
+                Delete User Permanently
               </AlertDialogTitle>
               <AlertDialogDescription className="space-y-2">
                 <span className="block">
                   You are about to permanently delete <span className="font-semibold text-foreground">{userToDelete?.name}</span>.
                 </span>
                 <span className="block">
-                  This action removes the user from the database and cannot be undone.
+                  This action removes the user and related records from the database and cannot be undone.
                 </span>
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -528,6 +557,58 @@ export default function AdminUsers() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={!!userToReject} onOpenChange={(open) => !open && !isRejectingUser && setUserToReject(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <X className="h-5 w-5" />
+                Reject User
+              </DialogTitle>
+              <DialogDescription>
+                Add a reason for rejecting this account so the user understands what needs to change before approval.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="rounded-lg border border-red-100 bg-red-50 p-3">
+                <p className="font-semibold text-foreground">{userToReject?.name}</p>
+                <p className="text-sm text-muted-foreground">{userToReject?.email}</p>
+              </div>
+              <Textarea
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Explain why this account cannot be approved right now..."
+                className="min-h-[120px]"
+                disabled={isRejectingUser}
+              />
+            </div>
+
+            <DialogFooter>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isRejectingUser) {
+                    setUserToReject(null);
+                    setRejectionReason('');
+                  }
+                }}
+                className="inline-flex items-center justify-center rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                disabled={isRejectingUser}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRejectUser}
+                className="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                disabled={isRejectingUser}
+              >
+                {isRejectingUser ? 'Rejecting...' : 'Reject User'}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit User Modal */}
         {isEditUserModalOpen && editingUser && (

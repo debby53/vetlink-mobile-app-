@@ -115,7 +115,7 @@ export default function Signup() {
 
     setIsLoading(true);
     try {
-      await signup(
+      const result = await signup(
         formData.name,
         formData.email,
         formData.password,
@@ -127,8 +127,18 @@ export default function Signup() {
         formData.specialization,
         formData.licenseNumber
       );
-      toast.success(t('accountCreated'));
-      navigate('/login');
+      toast.success(result.message || (result.requiresApproval ? t('signupPendingApproval') : t('accountCreated')));
+
+      if (result.requiresApproval) {
+        navigate('/login', {
+          state: {
+            successMessage: result.message || t('signupPendingApproval'),
+          },
+        });
+        return;
+      }
+
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || t('signupFailed'));
     } finally {

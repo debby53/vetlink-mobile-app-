@@ -23,6 +23,8 @@ public class AdminApplicationService {
     private final UserRepository userRepository;
     private final VeterinarianRepository veterinarianRepository;
     private final UserStatusChecker userStatusChecker;
+    private final EmailNotificationService emailNotificationService;
+    private final NotificationService notificationService;
 
     /**
      * Convert User to UserApplicationDTO
@@ -153,8 +155,16 @@ public class AdminApplicationService {
         user.setApprovedBy(currentUser.get());
         user.setApprovedAt(LocalDateTime.now());
         user.setRejectionReason(null);
+        user.setActive(true);
 
         User savedUser = userRepository.save(user);
+        notificationService.createNotification(
+                savedUser.getId(),
+                "Account approved",
+                "Your account has been approved. You can now sign in and access your VetLink dashboard.",
+                "SUCCESS"
+        );
+        emailNotificationService.sendApprovalEmail(savedUser);
         return convertToDTO(savedUser);
     }
 
@@ -168,8 +178,16 @@ public class AdminApplicationService {
 
         user.setStatus(UserStatus.PENDING_VERIFICATION); // Stays pending but with rejection reason
         user.setRejectionReason(rejectionReason);
+        user.setActive(false);
         
         User savedUser = userRepository.save(user);
+        notificationService.createNotification(
+                savedUser.getId(),
+                "Application update",
+                "Your account application requires attention. Reason: " + rejectionReason,
+                "WARNING"
+        );
+        emailNotificationService.sendRejectionEmail(savedUser, rejectionReason);
         return convertToDTO(savedUser);
     }
 
@@ -195,6 +213,7 @@ public class AdminApplicationService {
     public UserApplicationDTO activateUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        UserStatus previousStatus = user.getStatus();
 
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new RuntimeException("Cannot activate a suspended user");
@@ -219,6 +238,15 @@ public class AdminApplicationService {
         user.setActive(true);
         
         User savedUser = userRepository.save(user);
+        if (previousStatus != UserStatus.ACTIVE) {
+            notificationService.createNotification(
+                    savedUser.getId(),
+                    "Account approved",
+                    "Your account has been activated. You can now sign in and access your VetLink dashboard.",
+                    "SUCCESS"
+            );
+            emailNotificationService.sendApprovalEmail(savedUser);
+        }
         return convertToDTO(savedUser);
     }
 

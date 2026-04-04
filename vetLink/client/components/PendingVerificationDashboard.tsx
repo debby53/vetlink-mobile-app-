@@ -184,7 +184,7 @@ const PendingVerificationDashboard: React.FC = () => {
           {userStatus.status === 'PENDING_VERIFICATION' && (
             <div className="mt-6 p-4 bg-blue-100 rounded-lg border border-blue-300">
               <p className="text-sm text-blue-800">
-                Your account is currently unauthorized. Please wait for the approval from our team.
+                Your account is awaiting administrator approval. We will email you as soon as your account has been approved.
               </p>
             </div>
           )}

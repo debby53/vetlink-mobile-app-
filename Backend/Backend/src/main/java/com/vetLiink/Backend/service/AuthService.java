@@ -66,6 +66,7 @@ public class AuthService {
                 .status(foundUser.getStatus().toString())
                 .locationId(foundUser.getLocation() != null ? foundUser.getLocation().getId() : null)
                 .token(token)
+                .requiresApproval(foundUser.getStatus() != UserStatus.ACTIVE)
                 .build();
     }
 
@@ -108,6 +109,7 @@ public class AuthService {
                 .status(finalUser.getStatus().toString())
                 .locationId(finalUser.getLocation() != null ? finalUser.getLocation().getId() : null)
                 .token(token)
+                .requiresApproval(finalUser.getStatus() != UserStatus.ACTIVE)
                 .build();
     }
 
@@ -173,7 +175,13 @@ public class AuthService {
             veterinarianRepository.save(vet);
         }
 
-        String token = jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getRole().toString());
+        boolean requiresApproval = savedUser.getStatus() != UserStatus.ACTIVE;
+        String message = requiresApproval
+                ? "Your account request has been received. Please wait for approval by the administrator. You will receive an email once your account is approved."
+                : "Account created successfully.";
+        String token = requiresApproval
+                ? null
+                : jwtTokenProvider.generateToken(savedUser.getEmail(), savedUser.getRole().toString());
 
         return AuthResponse.builder()
                 .id(savedUser.getId())
@@ -183,5 +191,7 @@ public class AuthService {
                 .status(savedUser.getStatus().toString())
                 .locationId(savedUser.getLocation() != null ? savedUser.getLocation().getId() : null)
                 .token(token)
+                .message(message)
+                .requiresApproval(requiresApproval)
                 .build();
     }}
