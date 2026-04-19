@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class AdminSeederConfig {
 
     @Bean
