@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/session_store.dart';
 import '../../theme/app_colors.dart';
+import '../../services/language_provider.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -58,7 +59,7 @@ class _AppDrawerState extends State<AppDrawer> {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
+            title: Text(languageProvider.t('settings')),
             onTap: () {
                Navigator.of(context).pop();
                context.push('/shared/settings');
@@ -66,7 +67,7 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
           ListTile(
             leading: const Icon(Icons.logout, color: AppColors.destructive),
-            title: const Text('Logout', style: TextStyle(color: AppColors.destructive)),
+            title: Text(languageProvider.t('logout'), style: const TextStyle(color: AppColors.destructive)),
             onTap: _logout,
           ),
           const SizedBox(height: 16),
@@ -79,31 +80,31 @@ class _AppDrawerState extends State<AppDrawer> {
     switch (role) {
       case 'farmer':
         return [
-          _DrawerItem(icon: Icons.dashboard, title: 'Dashboard', route: '/farmer'),
-          _DrawerItem(icon: Icons.pets, title: 'My Animals', route: '/farmer/animals'),
-          _DrawerItem(icon: Icons.monitor_heart, title: 'Health Records', route: '/farmer/records'),
-          _DrawerItem(icon: Icons.calculate, title: 'Ration Calculator', route: '/shared/rations'),
+          _DrawerItem(icon: Icons.dashboard, title: languageProvider.t('dashboard'), route: '/farmer'),
+          _DrawerItem(icon: Icons.pets, title: languageProvider.t('my_animals'), route: '/farmer/animals'),
+          _DrawerItem(icon: Icons.monitor_heart, title: languageProvider.t('health_records'), route: '/farmer/records'),
+          _DrawerItem(icon: Icons.calculate, title: languageProvider.t('smart_feed_advisor'), route: '/shared/rations'),
           _DrawerItem(icon: Icons.store, title: 'Marketplace', route: '/shared/market'),
         ];
       case 'cahw':
         return [
-          _DrawerItem(icon: Icons.dashboard, title: 'Dashboard', route: '/cahw'),
+          _DrawerItem(icon: Icons.dashboard, title: languageProvider.t('dashboard'), route: '/cahw'),
           _DrawerItem(icon: Icons.map, title: 'Nearby Cases', route: '/cahw/nearby-cases'),
           _DrawerItem(icon: Icons.school, title: 'Training & Certificates', route: '/cahw/training'),
           _DrawerItem(icon: Icons.groups, title: 'Community', route: '/cahw/community'),
         ];
       case 'veterinarian':
         return [
-          _DrawerItem(icon: Icons.dashboard, title: 'Dashboard', route: '/vet'),
-          _DrawerItem(icon: Icons.local_hospital, title: 'Cases', route: '/vet/cases'),
-          _DrawerItem(icon: Icons.pets, title: 'Patients', route: '/vet/patients'),
-          _DrawerItem(icon: Icons.assignment, title: 'Treatment Plans', route: '/vet/treatment-plans'),
+          _DrawerItem(icon: Icons.dashboard, title: languageProvider.t('dashboard'), route: '/vet'),
+          _DrawerItem(icon: Icons.local_hospital, title: languageProvider.t('cases'), route: '/vet/cases'),
+          _DrawerItem(icon: Icons.pets, title: languageProvider.t('my_patients'), route: '/vet/patients'),
+          _DrawerItem(icon: Icons.assignment, title: languageProvider.t('treatment_plans'), route: '/vet/treatment-plans'),
           _DrawerItem(icon: Icons.upload_file, title: 'Upload Training', route: '/vet/training-upload'),
         ];
       case 'admin':
         return [
-           _DrawerItem(icon: Icons.dashboard, title: 'Admin Dashboard', route: '/admin'),
-           _DrawerItem(icon: Icons.group, title: 'Manage Users', route: '/admin/users'),
+           _DrawerItem(icon: Icons.dashboard, title: languageProvider.t('dashboard'), route: '/admin'),
+           _DrawerItem(icon: Icons.group, title: languageProvider.t('users'), route: '/admin/users'),
            _DrawerItem(icon: Icons.folder, title: 'Review Applications', route: '/admin/applications'),
         ];
       default:
