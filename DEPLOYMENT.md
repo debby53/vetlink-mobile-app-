@@ -4,7 +4,6 @@
 
 - `Backend/Backend`: Spring Boot backend for Render
 - `vetLink`: Vite frontend for Vercel
-- `vetlink_mobile`: separate Flutter app, not part of this deployment flow
 
 ## Docker
 
@@ -19,8 +18,8 @@ docker build -t vetlink-backend ./Backend/Backend
 Run:
 
 ```bash
-docker run --rm -p 8080:8080 \
-  -e PORT=8080 \
+docker run --rm -p 8081:8081 \
+  -e PORT=8081 \
   -e DB_URL=jdbc:postgresql://host:5432/dbname \
   -e DB_USERNAME=postgres \
   -e DB_PASSWORD=secret \

@@ -12,10 +12,10 @@ RUN ./mvnw -q package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-ENV PORT=8080
+ENV PORT=8081
 
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar /app/app.jar"]

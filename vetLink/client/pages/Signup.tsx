@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage, Language } from '@/lib/LanguageContext';
@@ -103,7 +103,9 @@ export default function Signup() {
     setError('');
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: FormEvent) => {
+    e?.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
       setError(t('passwordsMismatch'));
       return;
@@ -309,12 +311,17 @@ export default function Signup() {
   };
 
   const renderSecurityStep = () => (
-    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+    <form
+      id="signup-security-form"
+      onSubmit={handleSubmit}
+      className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300"
+    >
       <h2 className="text-xl font-semibold mb-4">{t('secureAccount')}</h2>
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">{t('createPassword')}</label>
         <input
           type="password"
+          autoComplete="new-password"
           value={formData.password}
           onChange={e => updateForm('password', e.target.value)}
           className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
@@ -325,6 +332,7 @@ export default function Signup() {
         <label className="block text-sm font-medium text-slate-700 mb-1">{t('confirmPassword')}</label>
         <input
           type="password"
+          autoComplete="new-password"
           value={formData.confirmPassword}
           onChange={e => updateForm('confirmPassword', e.target.value)}
           className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
@@ -336,7 +344,7 @@ export default function Signup() {
         <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <p>{t('dataSecure')}</p>
       </div>
-    </div>
+    </form>
   );
 
   return (
@@ -441,7 +449,8 @@ export default function Signup() {
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
+                type="submit"
+                form="signup-security-form"
                 disabled={isLoading}
                 className="flex items-center gap-2 bg-primary text-white font-medium px-8 py-2.5 rounded-lg hover:bg-primary/90 transition-all shadow-sm hover:shadow disabled:opacity-70 disabled:cursor-not-allowed"
               >
